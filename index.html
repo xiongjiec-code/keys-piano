@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Keys">
+<meta name="theme-color" content="#10142b">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Keys — Piano Lessons</title>
+<style>
+:root{--bg:#10142b;--card:#1b2145;--card2:#252c5a;--ink:#f4f6ff;--mute:#9aa3d6;--teal:#2fe0c0;--blue:#4a8cff;--green:#3ddc84;--red:#ff5d6c;--gold:#ffc940}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:ui-rounded,"SF Pro Rounded","Nunito","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overscroll-behavior:none}
+button{font-family:inherit;cursor:pointer;border:0}
+.screen{display:none;height:100%;height:100dvh;flex-direction:column}
+.screen.on{display:flex}
+/* HOME */
+#home{overflow-y:auto;padding:18px 16px 40px;display:none}
+#home.on{display:block}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.logo{font-weight:900;font-size:28px;letter-spacing:-.5px}
+.logo span{color:var(--teal)}
+.badges{display:flex;gap:8px}
+.badge{background:var(--card);border-radius:999px;padding:6px 12px;font-weight:800;font-size:14px}
+.sub{color:var(--mute);font-size:14px;margin:0 0 16px}
+.hero{background:linear-gradient(135deg,#3b5bff,#2fe0c0);border-radius:20px;padding:18px;margin-bottom:18px;color:#fff}
+.hero h2{margin:0 0 4px;font-size:20px;font-weight:900}
+.hero p{margin:0 0 12px;opacity:.92;font-size:14px}
+.btn{background:#fff;color:#1b2145;font-weight:900;border-radius:14px;padding:12px 18px;font-size:16px}
+.btn.ghost{background:rgba(255,255,255,.14);color:#fff}
+.btn.teal{background:var(--teal);color:#0c2a26}
+.unit{margin:22px 0 8px;font-weight:900;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute)}
+.lesson{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:8px;width:100%;text-align:left;color:var(--ink)}
+.lesson:active{transform:scale(.98)}
+.num{flex:none;width:40px;height:40px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-weight:900}
+.lesson.done .num{background:var(--green);color:#063}
+.lesson.next{outline:2px solid var(--teal)}
+.lesson.next .num{background:var(--teal);color:#0c2a26}
+.lt{flex:1;min-width:0}
+.lt b{display:block;font-size:16px}
+.lt small{color:var(--mute);font-size:13px}
+.stars{flex:none;color:#3a4278;font-size:16px;letter-spacing:1px}
+.stars i{font-style:normal}
+.stars i.on{color:var(--gold)}
+.foot{color:var(--mute);font-size:13px;margin-top:26px;line-height:1.5}
+/* LESSON */
+.bar{display:flex;align-items:center;gap:8px;padding:10px 12px;flex:none}
+.back{background:var(--card);color:var(--ink);width:40px;height:40px;border-radius:12px;font-size:20px;font-weight:900}
+.ttl{flex:1;min-width:0;font-weight:900;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tog{background:var(--card);color:var(--mute);border-radius:10px;padding:8px 10px;font-weight:800;font-size:12px}
+.tog.on{background:var(--card2);color:var(--teal)}
+.prog{height:6px;background:var(--card);margin:0 12px;border-radius:9px;overflow:hidden;flex:none}
+.prog div{height:100%;width:0;background:var(--teal);transition:width .3s}
+.staffwrap{background:#fbfaf5;border-radius:18px;margin:10px 12px 0;flex:none;overflow:hidden;position:relative}
+.staffwrap svg{display:block;width:100%;height:140px;transition:height .2s}
+.notes{transition:transform .35s cubic-bezier(.3,.7,.3,1)}
+.nh{fill:#1c1f33;stroke:#1c1f33;stroke-width:1.6}
+.nh.hollow{fill:#fbfaf5}
+.st{stroke:#1c1f33;stroke-width:1.6}
+.ok .nh{fill:var(--green);stroke:var(--green)} .ok .nh.hollow{fill:#dff8ea}
+.ok .st{stroke:var(--green)}
+.cur .nh{fill:var(--blue);stroke:var(--blue)} .cur .nh.hollow{fill:#dfe9ff}
+.cur .st{stroke:var(--blue)}
+.cur.bad .nh{fill:var(--red);stroke:var(--red)}
+.demo .nh{fill:var(--teal);stroke:var(--teal)}
+.nl{font:800 13px Nunito,sans-serif;fill:#8a8fa8;text-anchor:middle}
+.cur .nl{fill:var(--blue)} .ok .nl{fill:var(--green)}
+.hidelbl .nl{display:none}
+.colhi{fill:#e8efff;opacity:0;transition:opacity .2s}
+.cur .colhi{opacity:1}
+.prompt{text-align:center;padding:10px 12px 6px;font-size:18px;font-weight:800;min-height:44px;flex:none}
+.prompt b{color:var(--teal)}
+.prompt .bad{color:var(--red)}
+.ctrls{display:flex;justify-content:center;gap:8px;padding:0 12px 8px;flex:none}
+.ctrls .btn{padding:9px 14px;font-size:14px}
+.kbwrap{flex:1;min-height:140px;max-height:340px;padding:0 6px 10px;display:flex;flex-direction:column;justify-content:flex-end}
+.kb{position:relative;height:100%;touch-action:pan-x;user-select:none;-webkit-user-select:none}
+.key{position:absolute;top:0;border-radius:0 0 9px 9px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.white{height:100%;background:linear-gradient(#fff 80%,#e9ecf5);border:1px solid #c9cde0;z-index:1;padding-bottom:8px}
+.black{height:60%;background:linear-gradient(#3a3f5c,#13162a);z-index:2;border-radius:0 0 6px 6px;box-shadow:0 3px 4px rgba(0,0,0,.4)}
+.lbl{color:#7a809e;font-weight:900;font-size:15px;text-align:center;line-height:1}
+.lbl small{display:block;font-size:8px;font-weight:800;letter-spacing:.3px;margin-top:2px}
+.nolabels .lbl{visibility:hidden}
+.fing{display:none;position:absolute;top:30%;left:50%;transform:translateX(-50%);min-width:26px;padding:0 3px;height:26px;border-radius:13px;background:var(--blue);color:#fff;font-weight:900;font-size:12px;letter-spacing:-.5px;place-items:center}
+.white.target{background:linear-gradient(#c9f7ee,#7fe9d6);border-color:#3cc9ae}
+.black.target{background:linear-gradient(#36e0c2,#139a83)}
+.target .fing.has{display:grid}
+.white.press{background:#dfe5f7}
+.black.press{background:#000}
+.white.good{background:linear-gradient(#cdf5dc,#86e3ab)!important}
+.white.wrong,.black.wrong{background:linear-gradient(#ffd0d5,#ff8b96)!important}
+.white.demo{background:linear-gradient(#d9e6ff,#9cc0ff)}
+.black.demo{background:linear-gradient(#6e9dff,#2f5fd4)}
+.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* overlays */
+.ov{position:fixed;inset:0;background:rgba(8,10,25,.78);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+.ov.on{display:flex}
+.box{background:var(--card);border-radius:22px;padding:22px 20px;max-width:380px;width:100%;text-align:center}
+.box h3{margin:0 0 6px;font-size:22px;font-weight:900}
+.box p{color:var(--mute);margin:0 0 16px;line-height:1.45;font-size:15px}
+.big{font-size:44px;letter-spacing:4px;margin:6px 0}
+.big i{font-style:normal;color:#3a4278}
+.big i.on{color:var(--gold);animation:pop .4s backwards}
+.big i:nth-child(2){animation-delay:.15s}.big i:nth-child(3){animation-delay:.3s}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.3)}}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tipimg{font-size:40px;margin-bottom:4px}
+.oct{display:flex;gap:6px;align-items:center}
+.oct .tog{font-size:15px;padding:8px 12px}
+.midi{color:var(--teal);font-size:12px;font-weight:800}
+.tog.land{display:none}
+.hold{font-size:13px;color:var(--gold);white-space:nowrap}
+.hb{display:inline-block;font-size:12px;border-radius:7px;padding:1px 6px;color:#fff;vertical-align:2px}.hb.l{background:#ff8a3d}.hb.r{background:var(--blue)}
+.box{max-height:92vh;overflow-y:auto}
+@media (max-height:560px){
+  #lesson .bar{padding:4px 10px}#lesson .back{width:34px;height:34px}
+  #lesson .ctrls{display:none}#lesson .tog.land{display:inline-block}
+  #lesson .staffwrap{margin-top:6px}
+  #lesson .prompt{font-size:15px;min-height:0;padding:4px 12px}
+  #lesson .micstrip{margin-bottom:4px;padding:4px 10px}
+  #lesson .kbwrap{padding-bottom:4px}
+  #free .prompt{min-height:40px!important;padding-top:6px!important;font-size:28px!important}
+}
+:root{--pink:#ff6fb5}
+.unit{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}.unit span{flex:none;letter-spacing:0;text-transform:none}
+.tabs{display:flex;gap:8px}
+.tab{flex:1;border-radius:16px;padding:12px;background:var(--card);color:var(--mute);text-align:left;border:2px solid transparent}
+.tab b{display:block;font-size:17px;color:var(--ink)}
+.tab small{font-weight:800}
+.tab.t-soloist.on{border-color:var(--blue);background:#1d2a5e}
+.tab.t-chords.on{border-color:var(--pink);background:#3a1d4a}
+.pdesc{color:var(--mute);font-size:14px;margin:10px 2px 0;line-height:1.45}
+.lesson.p-soloist .num{box-shadow:inset 0 0 0 2px var(--blue)}
+.lesson.p-chords .num{box-shadow:inset 0 0 0 2px var(--pink)}
+.lesson.done .num{box-shadow:none}
+.nh.hit{fill:var(--green)!important;stroke:var(--green)!important}
+.chs{font:900 15px Nunito,sans-serif;fill:#d63b8a;text-anchor:middle}
+.fing.lh{background:#ff8a3d}
+.kbwrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.kbwrap::-webkit-scrollbar{display:none}
+.micstrip{display:none;align-items:center;gap:10px;margin:0 12px 8px;background:var(--card);border-radius:12px;padding:8px 12px;font-size:13px;font-weight:800;color:var(--mute);flex:none}
+.micstrip.on{display:flex}
+.micstrip .dot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.3}}
+.meter{flex:1;height:8px;background:#0d1024;border-radius:9px;overflow:hidden;position:relative}
+.meter div{height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .05s}
+.meter span{position:absolute;top:0;bottom:0;width:2px;background:#fff6}
+.hear{min-width:58px;text-align:right;color:var(--ink)}
+.hear b{color:var(--teal);font-size:16px}
+.tog.mic.on{background:var(--red);color:#fff}
+.box ol{text-align:left;color:var(--mute);font-size:14px;line-height:1.5;padding-left:20px;margin:0 0 16px}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.screen{height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen on">
+  <div class="top">
+    <div class="logo">Keys<span>.</span></div>
+    <div class="badges"><div class="badge" id="streak">🔥 0</div><div class="badge" id="starTotal">⭐ 0</div></div>
+  </div>
+  <p class="sub">Learn piano one small step at a time.</p>
+  <div class="hero">
+    <h2 id="heroTitle">Start your first lesson</h2>
+    <p id="heroDesc">Find Middle C and play your first notes.</p>
+    <div class="row" style="justify-content:flex-start">
+      <button class="btn" id="heroBtn">Continue ▶</button>
+      <button class="btn ghost" id="freeBtn">🎹 Free play</button>
+      <button class="btn ghost" id="homeMic">🎤 Use my keyboard</button>
+    </div>
+  </div>
+  <div id="units"></div>
+  <div class="foot">
+    <b>How it works:</b> the staff shows the notes, the glowing key shows where to play, and the blue number is which finger to use (thumb = 1, pinky = 5). The lesson waits for you, so take your time. Tap <b>🔊 Listen</b> to hear how it should sound first.<br><br>
+    🎤 <b>Practicing on a real keyboard?</b> Tap 🎤 and the app listens through your mic. Play one note at a time; any octave counts.<br>📱 Turn your phone sideways for a bigger keyboard. 💻 On a computer, keys A W S E D F T G Y H U J K play notes. 🎹 A USB MIDI keyboard works too in browsers that allow it.
+    <span class="midi" id="midiStat"></span>
+  </div>
+</div>
+
+<!-- LESSON -->
+<div id="lesson" class="screen">
+  <div class="bar">
+    <button class="back" id="lBack">‹</button>
+    <div class="ttl" id="lTitle"></div>
+    <button class="tog" id="tLbl">ABC</button>
+    <button class="tog" id="tHi">Guide</button>
+    <button class="tog mic" id="tMic">🎤</button>
+    <button class="tog land" id="listenBtn2">🔊</button><button class="tog land" id="restartBtn2">↺</button>
+  </div>
+  <div class="prog"><div id="lProg"></div></div>
+  <div class="staffwrap" id="staffwrap"></div>
+  <div class="prompt" id="prompt"></div>
+  <div class="micstrip" id="micStrip"><div class="dot"></div><span>Listening</span><div class="meter"><div id="micLvl"></div><span id="micGate"></span></div><div class="hear" id="micHear">—</div></div>
+  <div class="ctrls">
+    <button class="btn ghost" id="listenBtn">🔊 Listen</button>
+    <button class="btn ghost" id="restartBtn">↺ Restart</button>
+  </div>
+  <div class="kbwrap"><div class="kb" id="lkb"></div></div>
+</div>
+
+<!-- FREE PLAY -->
+<div id="free" class="screen">
+  <div class="bar">
+    <button class="back" id="fBack">‹</button>
+    <div class="ttl">Free play</div>
+    <div class="oct"><button class="tog" id="octDn">◀</button><span id="octLbl" style="font-weight:900;min-width:28px;text-align:center">C4</span><button class="tog" id="octUp">▶</button></div>
+    <button class="tog" id="fLbl">ABC</button>
+    <button class="tog mic" id="fMic">🎤</button>
+  </div>
+  <div class="prompt" id="freeNote" style="font-size:40px;font-weight:900;min-height:70px;padding-top:24px;color:var(--teal)">♪</div>
+  <div class="micstrip" id="micStrip2"><div class="dot"></div><span>Listening</span><div class="meter"><div id="micLvl2"></div></div><div class="hear" id="micHear2">—</div></div>
+  <div class="kbwrap" style="max-height:360px"><div class="kb" id="fkb"></div></div>
+</div>
+
+<!-- overlays -->
+<div class="ov" id="tipOv"><div class="box">
+  <div class="tipimg" id="tipIcon">🎹</div>
+  <h3 id="tipTitle"></h3>
+  <p id="tipText"></p>
+  <div class="row"><button class="btn ghost" id="tipListen">🔊 Listen</button><button class="btn teal" id="tipGo">Let's play</button></div>
+</div></div>
+<div class="ov" id="micOv"><div class="box">
+  <div class="tipimg">🎤</div>
+  <h3 id="micOvTitle">Listen to your keyboard</h3>
+  <div id="micOvBody"></div>
+  <div class="row"><button class="btn teal" id="micOvOk">Got it</button></div>
+</div></div>
+<div class="ov" id="doneOv"><div class="box">
+  <h3 id="doneTitle">Great job!</h3>
+  <div class="big" id="doneStars"></div>
+  <p id="doneText"></p>
+  <div class="row"><button class="btn ghost" id="dRetry">↺ Again</button><button class="btn ghost" id="dHome">Lessons</button><button class="btn teal" id="dNext">Next ▶</button></div>
+</div></div>
+
+<script>
+/* ---------- music helpers ---------- */
+const NN=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const LI={0:0,2:1,4:2,5:3,7:4,9:5,11:6};
+const toMidi=n=>{const m=n.match(/^([A-G])([#b]?)(-?\d)$/);return (parseInt(m[3])+1)*12+NN.indexOf(m[1])+(m[2]==='#'?1:m[2]==='b'?-1:0);};
+const FN=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+const isFlat=m=>!!(typeof L!=='undefined'&&L&&L.flat&&L.flat.has(m));
+const letter=m=>NN[m%12];
+const nameOf=m=>NN[m%12]+(Math.floor(m/12)-1);
+const isBlack=m=>[1,3,6,8,10].includes(m%12);
+const stepOf=m=>{if(isBlack(m))m+=isFlat(m)?1:-1;return (Math.floor(m/12)-1)*7+LI[m%12];};
+const seq=s=>{const out=[];let ch=null;s.trim().split(/\s+/).forEach(t=>{if(t[0]==='['){ch=t.slice(1,-1);return;}const[n,b]=t.split(':');out.push({ms:n.split('+').map(toMidi),b:b?parseFloat(b):1,ch});ch=null;});return out;};
+const RH={C4:1,D4:2,E4:3,F4:4,G4:5};
+const LH={C3:5,D3:4,E3:3,F3:2,G3:1};
+const MIDC={F3:5,G3:4,A3:3,B3:2,C4:1,D4:2,E4:3,F4:4,G4:5,A4:5};
+const BOTH={C3:5,D3:4,E3:3,F3:2,G3:1,C4:1,D4:2,E4:3,F4:4,G4:5};
+
+/* ---------- lessons ---------- */
+const LESSONS=[
+ {unit:'1 · Meet the keyboard',title:'Find Middle C',desc:'Your home base on the piano',icon:'📍',
+  tip:'Look for a group of two black keys near the middle of the piano. The white key just to their left is Middle C. Play it with your right thumb — that\'s finger 1.',
+  notes:'C4 C4 C4 C4 C4:2 C4:2 C4:4',fingers:RH},
+ {unit:'1 · Meet the keyboard',title:'C and D',desc:'Two neighbours',icon:'👣',
+  tip:'D is the white key right of C, between the two black keys. Keep your thumb on C and use finger 2 for D.',
+  notes:'C4 D4 C4 D4 C4 D4 C4:2 D4 D4 C4:2',fingers:RH},
+ {unit:'1 · Meet the keyboard',title:'C, D, E',desc:'Three fingers, three notes',icon:'🖐️',
+  tip:'E is just right of the two black keys. Thumb on C, finger 2 on D, finger 3 on E. Keep your fingers curved like holding a ball.',
+  notes:'C4 D4 E4:2 E4 D4 C4:2 C4 D4 E4 D4 C4:2 E4 E4 C4:2',fingers:RH},
+ {unit:'1 · Meet the keyboard',title:'Five-finger position',desc:'C D E F G — one finger per key',icon:'✋',
+  tip:'Put one finger on each key from C to G: thumb on C, pinky on G. This is "C position" — most of your first songs stay right here.',
+  notes:'C4 D4 E4 F4 G4:2 G4 F4 E4 D4 C4:2 C4 E4 D4 F4 E4 G4:2',fingers:RH},
+ {unit:'1 · Meet the keyboard',title:'Skipping notes',desc:'Jump over a key',icon:'🐸',
+  tip:'Now skip a key: C to E to G uses fingers 1, 3 and 5. Together these three notes make a C major chord.',
+  notes:'C4 E4 G4 E4 C4:2 C4 E4 G4:2 G4 E4 C4:4',fingers:RH},
+
+ {unit:'2 · First songs',title:'Hot Cross Buns',desc:'Your first real song',icon:'🥐',
+  tip:'Just three notes: E, D, C. The fast notes in the middle are half as long — play them quickly and evenly.',
+  notes:'E4 D4 C4:2 E4 D4 C4:2 C4:.5 C4:.5 C4:.5 C4:.5 D4:.5 D4:.5 D4:.5 D4:.5 E4 D4 C4:2',fingers:RH,tempo:100},
+ {unit:'2 · First songs',title:'Mary Had a Little Lamb',desc:'Adds G for a little jump',icon:'🐑',
+  tip:'Stay in C position. Most of this song is E, D and C, with a jump up to G with your pinky.',
+  notes:'E4 D4 C4 D4 E4 E4 E4:2 D4 D4 D4:2 E4 G4 G4:2 E4 D4 C4 D4 E4 E4 E4 E4 D4 D4 E4 D4 C4:4',fingers:RH,tempo:100},
+ {unit:'2 · First songs',title:'Ode to Joy',desc:'Beethoven\'s famous melody',icon:'🎼',
+  tip:'All five fingers in C position. The melody walks step by step — watch whether the notes go up or down on the staff.',
+  notes:'E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 E4:1.5 D4:.5 D4:2 E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4:1.5 C4:.5 C4:2',fingers:RH,tempo:100},
+ {unit:'2 · First songs',title:'Jingle Bells',desc:'The famous chorus',icon:'🔔',
+  tip:'Lots of repeated E\'s — keep finger 3 relaxed. The chorus ends by jumping up to G.',
+  notes:'E4 E4 E4:2 E4 E4 E4:2 E4 G4 C4:1.5 D4:.5 E4:4 F4 F4 F4:1.5 F4:.5 F4 E4 E4 E4:.5 E4:.5 E4 D4 D4 E4 D4:2 G4:2',fingers:RH,tempo:120},
+ {unit:'2 · First songs',title:'Twinkle Twinkle',desc:'Reach up to A',icon:'⭐',
+  tip:'This one reaches A, just past G. Shift your hand: thumb plays both C and D, and your pinky lands on A.',
+  notes:'C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2 G4 G4 F4 F4 E4 E4 D4:2 G4 G4 F4 F4 E4 E4 D4:2 C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2',
+  fingers:{C4:1,D4:1,E4:2,F4:3,G4:4,A4:5},tempo:110},
+
+ {unit:'3 · Left hand',title:'Meet your left hand',desc:'Bass clef, C to G',icon:'🤚',
+  tip:'Low notes are written on the bass clef. Find the C below Middle C. Your LEFT pinky (5) goes on C and your thumb (1) on G.',
+  notes:'C3 D3 E3 F3 G3:2 G3 F3 E3 D3 C3:2 C3 E3 G3:2 G3 E3 C3:2',fingers:LH},
+ {unit:'3 · Left hand',title:'Left-hand Hot Cross Buns',desc:'Same song, other hand',icon:'🥯',
+  tip:'Same tune as before, played low with your left hand: E is finger 3, D is 4, C is 5.',
+  notes:'E3 D3 C3:2 E3 D3 C3:2 C3:.5 C3:.5 C3:.5 C3:.5 D3:.5 D3:.5 D3:.5 D3:.5 E3 D3 C3:2',fingers:LH,tempo:100},
+ {unit:'3 · Left hand',title:'Left-hand Mary',desc:'A full song in the bass',icon:'🐑',
+  tip:'Mary Had a Little Lamb with your left hand. The jump to G is your thumb.',
+  notes:'E3 D3 C3 D3 E3 E3 E3:2 D3 D3 D3:2 E3 G3 G3:2 E3 D3 C3 D3 E3 E3 E3 E3 D3 D3 E3 D3 C3:4',fingers:LH,tempo:100},
+
+ {unit:'4 · Read music',title:'Note reader: C to G',desc:'No glowing keys — read the staff!',icon:'👀',reader:true,
+  tip:'Challenge time! The keys won\'t light up and the letters are hidden. Read each note on the staff and find it yourself. Middle C sits on its own little line below the staff.',
+  pool:['C4','D4','E4','F4','G4']},
+ {unit:'4 · Read music',title:'Note reader: C to C',desc:'A full octave of reading',icon:'🧠',reader:true,
+  tip:'Now the whole octave from Middle C up to the next C. Lines from the bottom: E G B D F ("Every Good Boy Does Fine"). Spaces: F A C E.',
+  pool:['C4','D4','E4','F4','G4','A4','B4','C5']},
+ {unit:'4 · Read music',title:'Happy Birthday',desc:'Up high, in waltz time',icon:'🎂',
+  tip:'This song lives higher up, starting on the G above Middle C. Move your right hand up and let your ear guide you — you know how it goes!',
+  notes:'G4:.75 G4:.25 A4 G4 C5 B4:2 G4:.75 G4:.25 A4 G4 D5 C5:2 G4:.75 G4:.25 G5 E5 C5 B4 A4:2 F5:.75 F5:.25 E5 C5 D5 C5:3',
+  fingers:{G4:1,A4:2,B4:3,C5:3,D5:4,E5:4,F5:5,G5:5},tempo:100},
+ /* ===== SOLOIST PATH ===== */
+ {path:'soloist',unit:'Soloist I · Hands together',title:'Hands take turns',desc:'Meet the grand staff',icon:'🤝',both:true,fingers:BOTH,tempo:100,
+  tip:'Two staves now! The top (treble) staff is your RIGHT hand, the bottom (bass) staff is your LEFT hand. Right thumb on Middle C, left pinky on the C below. Here the hands take turns.',
+  notes:'C4 D4 E4:2 E3 D3 C3:2 E4 F4 G4:2 G3 F3 E3:2 G4 E4 C4:2 C3 E3 G3:2 C4:4'},
+ {path:'soloist',unit:'Soloist I · Hands together',title:'Hands together',desc:'Both hands at the same time',icon:'🙌',both:true,fingers:BOTH,tempo:80,
+  tip:'Press both keys at exactly the same time. Your hands move like a mirror: the left pinky and right thumb both play C. The app waits until it has both notes.',
+  notes:'C3+C4:2 D3+D4:2 E3+E4:2 F3+F4:2 G3+G4:4 G3+G4 F3+F4 E3+E4 D3+D4 C3+C4:4'},
+ {path:'soloist',unit:'Soloist I · Hands together',title:'Mary, both hands',desc:'Melody plus a bass note',icon:'🐑',both:true,fingers:BOTH,tempo:90,
+  tip:'Your right hand plays Mary Had a Little Lamb. Every so often the left hand adds one low note on the same beat. Hold your left hand ready over C and G.',
+  notes:'E4+C3 D4 C4 D4 E4+C3 E4 E4:2 D4+G3 D4 D4:2 E4+C3 G4 G4:2 E4+C3 D4 C4 D4 E4+C3 E4 E4 E4 D4+G3 D4 E4 D4 C4+C3:4'},
+ {path:'soloist',unit:'Soloist I · Hands together',title:'Ode to Joy, both hands',desc:'Beethoven with a bass line',icon:'🎼',both:true,fingers:BOTH,tempo:90,
+  tip:'The left hand plays one note at the start of every bar: C or G. Keep the right-hand melody smooth and let the bass notes land with it.',
+  notes:'E4+C3 E4 F4 G4 G4+G3 F4 E4 D4 C4+C3 C4 D4 E4 E4+G3:1.5 D4:.5 D4:2 E4+C3 E4 F4 G4 G4+G3 F4 E4 D4 C4+C3 C4 D4 E4 D4+G3:1.5 C4:.5 C4+C3:2'},
+ {path:'soloist',unit:'Soloist I · Hands together',title:'When the Saints',desc:'A jazzy classic',icon:'🎺',both:true,fingers:BOTH,tempo:110,
+  tip:'"Oh when the saints…" Long notes are held while you count. The left hand adds C, F or G under the long notes.',
+  notes:'C4 E4 F4 G4+C3:4 C4 E4 F4 G4+C3:4 C4 E4 F4 G4+C3:2 E4:2 C4+C3:2 E4:2 D4+G3:4 E4 E4 D4 C4+C3:3 C4 E4+C3:2 G4:2 G4 F4+F3:3 E4 F4 G4+C3:2 E4:2 C4+G3:2 D4:2 C4+C3:4'},
+
+ {path:'soloist',unit:'Soloist II · Reading & technique',title:'C major scale, right hand',desc:'Thumb-under technique',icon:'🪜',hand:'R',tempo:90,
+  fingers:{C4:1,D4:2,E4:3,F4:1,G4:2,A4:3,B4:4,C5:5},
+  tip:'Eight notes from C to C. After E (finger 3), tuck your THUMB under your hand to play F, then keep going 2-3-4-5. Coming down, cross finger 3 over the thumb onto E.',
+  notes:'C4 D4 E4 F4 G4 A4 B4 C5:2 C5 B4 A4 G4 F4 E4 D4 C4:2'},
+ {path:'soloist',unit:'Soloist II · Reading & technique',title:'C major scale, left hand',desc:'Cross finger 3 over',icon:'🪜',hand:'L',tempo:90,
+  fingers:{C3:5,D3:4,E3:3,F3:2,G3:1,A3:3,B3:2,C4:1},
+  tip:'Left hand from C up to Middle C: 5-4-3-2-1, then cross finger 3 OVER your thumb onto A and finish 2-1. Coming down, tuck the thumb under.',
+  notes:'C3 D3 E3 F3 G3 A3 B3 C4:2 C4 B3 A3 G3 F3 E3 D3 C3:2'},
+ {path:'soloist',unit:'Soloist II · Reading & technique',title:'Meet the sharps',desc:'G position and F♯',icon:'♯',hand:'R',tempo:90,
+  fingers:{G4:1,A4:2,B4:3,C5:4,D5:5},
+  tip:'A sharp (♯) means "play the black key just to the right". F♯ is the black key right of F. Move your right thumb up to G for G position.',
+  notes:'G4 A4 B4 C5 D5:2 D5 C5 B4 A4 G4:2 G4 F#4 G4 A4 B4:2 A4 G4 F#4 G4:4'},
+ {path:'soloist',unit:'Soloist II · Reading & technique',title:'Bass clef reader',desc:'Read low notes, no hints',icon:'👀',reader:true,
+  tip:'Bass clef practice. Lines from the bottom: G B D F A ("Good Boys Do Fine Always"). Spaces: A C E G ("All Cows Eat Grass"). The keys won\'t light up!',
+  pool:['C3','D3','E3','F3','G3','A3','B3']},
+ {path:'soloist',unit:'Soloist II · Reading & technique',title:'Grand staff reader',desc:'Jump between both staves',icon:'🧠',reader:true,
+  tip:'Notes now appear on either staff. Top staff = right side of the keyboard, bottom staff = left side. Middle C sits between them.',
+  pool:['C3','E3','G3','B3','C4','E4','G4','B4','D5']},
+
+ {path:'soloist',unit:'Soloist III · Classical pieces',title:'Minuet in G',desc:'Petzold · simplified bass',icon:'🎻',both:true,tempo:100,
+  tip:'A famous minuet (often credited to Bach) in 3/4 time: count 1-2-3. The left hand plays one bass note at the start of each bar. Watch for F♯!',
+  notes:'D5+G3 G4:.5 A4:.5 B4:.5 C5:.5 D5+B3 G4 G4 E5+C3 C5:.5 D5:.5 E5:.5 F#5:.5 G5+B2 G4 G4 C5+A2 D5:.5 C5:.5 B4:.5 A4:.5 B4+G2 C5:.5 B4:.5 A4:.5 G4:.5 F#4+D3 G4:.5 A4:.5 B4:.5 G4:.5 A4+D3:3 D5+G3 G4:.5 A4:.5 B4:.5 C5:.5 D5+B3 G4 G4 E5+C3 C5:.5 D5:.5 E5:.5 F#5:.5 G5+B2 G4 G4 C5+A2 D5:.5 C5:.5 B4:.5 A4:.5 B4+G2 C5:.5 B4:.5 A4:.5 G4:.5 A4+D3 B4:.5 A4:.5 G4:.5 F#4:.5 G4+G2:3'},
+ {path:'soloist',unit:'Soloist III · Classical pieces',title:'Für Elise',desc:'Beethoven · the famous opening',icon:'🌙',both:true,tempo:72,
+  tip:'The hands pass the music back and forth: the right hand plays the E–D♯ wiggle, then the left hand rolls up a broken chord. Play gently and evenly.',
+  notes:'E5:.5 D#5:.5 E5:.5 D#5:.5 E5:.5 B4:.5 D5:.5 C5:.5 A4+A2 E3:.5 A3:.5 C4:.5 E4:.5 A4:.5 B4+E3 G#3:.5 B3:.5 E4:.5 G#4:.5 B4:.5 C5+A2 E3:.5 A3:.5 E4:.5 E5:.5 D#5:.5 E5:.5 D#5:.5 E5:.5 B4:.5 D5:.5 C5:.5 A4+A2 E3:.5 A3:.5 C4:.5 E4:.5 A4:.5 B4+E3 G#3:.5 B3:.5 E4:.5 C5:.5 B4:.5 A4+A2:2'},
+ {path:'soloist',unit:'Soloist III · Classical pieces',title:'Canon (Pachelbel)',desc:'Melody over moving chords',icon:'💒',both:true,tempo:70,
+  tip:'The wedding favorite, in C. Each step is a melody note plus a three-note left-hand chord. Take your time: the app waits for all the notes.',
+  notes:'[C] E5+C3+E3+G3:2 [G/B] D5+B2+D3+G3:2 [Am] C5+A2+C3+E3:2 [Em/G] B4+G2+B2+E3:2 [F/A] A4+A2+C3+F3:2 [C/G] G4+G2+C3+E3:2 [F/A] A4+A2+C3+F3:2 [G/B] B4+B2+D3+G3:2 [C] C5+C3+E3+G3:2 [G/B] B4+B2+D3+G3:2 [Am] A4+A2+C3+E3:2 [Em/G] G4+G2+B2+E3:2 [F/A] F4+A2+C3+F3:2 [C/G] E4+G2+C3+E3:2 [F/A] F4+A2+C3+F3:2 [G/B] D4+B2+D3+G3:2 [C] C5+C3+E3+G3:4'},
+
+ /* ===== CHORDS PATH ===== */
+ {path:'chords',unit:'Chords I · Chord basics',title:'Your first chord: C',desc:'Three notes at once',icon:'🎹',hand:'R',tempo:80,fingers:{C4:1,E4:3,G4:5},
+  tip:'A chord is three or more notes played together. C major = C + E + G: right thumb, middle finger and pinky. First play them one by one, then all at once.',
+  notes:'C4 E4 G4:2 [C] C4+E4+G4:2 [C] C4+E4+G4:2 C4 E4 G4 E4 [C] C4+E4+G4:4'},
+ {path:'chords',unit:'Chords I · Chord basics',title:'C, F and G chords',desc:'The three most useful chords',icon:'🧩',hand:'R',tempo:80,
+  fingers:{C4:1,E4:3,G4:5,F4:3,A4:5,B3:1,D4:2},
+  tip:'Keep your thumb near C and only move what you need. F chord = C F A (thumb stays, fingers 3 and 5 move up). G chord = B D G (thumb slides down to B). These three chords play thousands of songs.',
+  notes:'[C] C4+E4+G4:2 [F] C4+F4+A4:2 [C] C4+E4+G4:2 [G] B3+D4+G4:2 [C] C4+E4+G4:2 [F] C4+F4+A4:2 [G] B3+D4+G4:2 [C] C4+E4+G4:4'},
+ {path:'chords',unit:'Chords I · Chord basics',title:'Left-hand chords',desc:'C, F and G7 down low',icon:'🤚',hand:'L',tempo:80,fingers:{B2:5,C3:5,E3:3,F3:2,G3:1,A3:1},
+  tip:'Now the left hand. C = C E G (5-3-1). F = C F A (5-2-1). G7 = B F G (5-2-1), a "seventh" chord with a bluesy pull back to C.',
+  notes:'[C] C3+E3+G3:2 [C] C3+E3+G3:2 [F] C3+F3+A3:2 [F] C3+F3+A3:2 [C] C3+E3+G3:2 [G7] B2+F3+G3:2 [G7] B2+F3+G3:2 [C] C3+E3+G3:4'},
+ {path:'chords',unit:'Chords I · Chord basics',title:'Jingle Bells with chords',desc:'Melody + left-hand chords',icon:'🔔',both:true,tempo:110,
+  tip:'Right hand plays the melody you know. On the first beat of each bar the left hand adds a chord: C, F or G7. Look at the chord names above the staff.',
+  notes:'[C] E4+C3+E3+G3 E4 E4:2 [C] E4+C3+E3+G3 E4 E4:2 [C] E4+C3+E3+G3 G4 C4:1.5 D4:.5 [C] E4+C3+E3+G3:4 [F] F4+C3+F3+A3 F4 F4:1.5 F4:.5 [C] F4+C3+E3+G3 E4 E4 E4:.5 E4:.5 [G7] E4+B2+F3+G3 D4 D4 E4 [G7] D4+B2+F3+G3:2 G4:2'},
+
+ {path:'chords',unit:'Chords II · Pop progressions',title:'Minor chords: A minor',desc:'The "sad" sound',icon:'🌧️',hand:'R',tempo:80,
+  tip:'Minor chords sound darker. A minor = A C E. Here we play it as C E A, so only your pinky moves from G up to A. Hear the mood change?',
+  notes:'[C] C4+E4+G4:2 [Am] C4+E4+A4:2 [C] C4+E4+G4:2 [Am] C4+E4+A4:2 [F] C4+F4+A4:2 [Am] C4+E4+A4:2 [G] B3+D4+G4:2 [C] C4+E4+G4:4'},
+ {path:'chords',unit:'Chords II · Pop progressions',title:'The pop progression',desc:'C – G – Am – F',icon:'🎧',hand:'R',tempo:80,
+  tip:'These four chords (I–V–vi–IV) power a huge number of pop songs. The voicings are chosen so your hand barely moves. Loop it twice.',
+  notes:'[C] C4+E4+G4:2 [G] B3+D4+G4:2 [Am] C4+E4+A4:2 [F] C4+F4+A4:2 [C] C4+E4+G4:2 [G] B3+D4+G4:2 [Am] C4+E4+A4:2 [F] C4+F4+A4:2 [C] C4+E4+G4:4'},
+ {path:'chords',unit:'Chords II · Pop progressions',title:'Pop progression, both hands',desc:'Bass note + chord',icon:'🎤',both:true,tempo:80,
+  tip:'The left hand plays the chord\'s name note (its root) down low, while the right hand plays the chord. That\'s how most pop accompaniment is built.',
+  notes:'[C] C3+C4+E4+G4:2 [G] G3+D4+G4+B4:2 [Am] A3+C4+E4+A4:2 [F] F3+C4+F4+A4:2 [C] C3+C4+E4+G4:2 [G] G3+D4+G4+B4:2 [Am] A3+C4+E4+A4:2 [F] F3+C4+F4+A4:2 [C] C3+C4+E4+G4:4'},
+ {path:'chords',unit:'Chords II · Pop progressions',title:'Broken chords',desc:'Arpeggios for ballads',icon:'🌊',hand:'L',tempo:100,
+  tip:'Instead of playing a chord all at once, roll through its notes one at a time: low, middle, high, middle. This flowing pattern is used in countless ballads.',
+  notes:'[C] C3:.5 E3:.5 G3:.5 E3:.5 C3:.5 E3:.5 G3:.5 E3:.5 [G] B2:.5 D3:.5 G3:.5 D3:.5 B2:.5 D3:.5 G3:.5 D3:.5 [Am] A2:.5 C3:.5 E3:.5 C3:.5 A2:.5 C3:.5 E3:.5 C3:.5 [F] A2:.5 C3:.5 F3:.5 C3:.5 A2:.5 C3:.5 F3:.5 C3:.5 [C] C3+E3+G3:4'},
+
+ {path:'chords',unit:'Chords III · Styles & songs',title:'Waltz style',desc:'Oom-pah-pah in 3/4',icon:'💃',both:true,tempo:110,
+  tip:'Count 1-2-3. On 1 the left hand plays the bass note ("oom"), on 2 and 3 the right hand plays the chord ("pah-pah").',
+  notes:'[C] C3 C4+E4+G4 C4+E4+G4 [F] F3 C4+F4+A4 C4+F4+A4 [G] G3 D4+G4+B4 D4+G4+B4 [C] C3 C4+E4+G4 C4+E4+G4 [Am] A3 C4+E4+A4 C4+E4+A4 [F] F3 C4+F4+A4 C4+F4+A4 [G] G3 D4+G4+B4 D4+G4+B4 [C] C3+C4+E4+G4:3'},
+ {path:'chords',unit:'Chords III · Styles & songs',title:'12-bar blues',desc:'The backbone of blues & rock',icon:'🎸',both:true,tempo:100,
+  tip:'Twelve bars, three chords: C C C C | F F C C | G F C G. Left hand plays the root, right hand the chord, twice per bar. Feel the groove!',
+  notes:'[C] C3+C4+E4+G4:2 C3+C4+E4+G4:2 [C] C3+C4+E4+G4:2 C3+C4+E4+G4:2 [C] C3+C4+E4+G4:2 C3+C4+E4+G4:2 [C] C3+C4+E4+G4:2 C3+C4+E4+G4:2 [F] F3+C4+F4+A4:2 F3+C4+F4+A4:2 [F] F3+C4+F4+A4:2 F3+C4+F4+A4:2 [C] C3+C4+E4+G4:2 C3+C4+E4+G4:2 [C] C3+C4+E4+G4:2 C3+C4+E4+G4:2 [G] G3+D4+G4+B4:2 G3+D4+G4+B4:2 [F] F3+C4+F4+A4:2 F3+C4+F4+A4:2 [C] C3+C4+E4+G4:2 C3+C4+E4+G4:2 [G] G3+D4+G4+B4:2 G3+D4+G4+B4:2 [C] C3+C4+E4+G4:4'},
+ {path:'chords',unit:'Chords III · Styles & songs',title:'Silent Night with chords',desc:'Melody + chords, full song',icon:'🕯️',both:true,tempo:90,
+  tip:'A full song! Right hand plays the melody. The left hand plays a chord whenever a new chord name appears above the staff, and holds it.',
+  notes:'[C] G4+C3+E3+G3:1.5 A4:.5 G4 E4:3 G4:1.5 A4:.5 G4 E4:3 [G] D5+B2+D3+G3:2 D5 B4:3 [C] C5+C3+E3+G3:2 C5 G4:3 [F] A4+C3+F3+A3:2 A4 C5:1.5 B4:.5 A4 [C] G4+C3+E3+G3:1.5 A4:.5 G4 E4:3 [F] A4+C3+F3+A3:2 A4 C5:1.5 B4:.5 A4 [C] G4+C3+E3+G3:1.5 A4:.5 G4 E4:3 [G] D5+B2+D3+G3:2 D5 F5:1.5 D5:.5 B4 [C] C5+C3+E3+G3:3 E5:3 [C] C5+C3+E3+G3 G4 E4 [G7] G4+B2+F3+G3:1.5 F4:.5 D4 [C] C4+C3+E3+G3:6'},
+ /* ===== extra beginner lessons (placed by BASICS_ORDER) ===== */
+ {title:'Black key groups',desc:'Twos and threes: your map of the keyboard',icon:'⚫',hand:'R',fingers:{'C#4':2,'D#4':3,'F#4':2,'G#4':3,'A#4':4},
+  tip:'Black keys come in groups of two and three, all the way up the piano. They are your landmarks: C is always just left of a group of two. Play the group of two with fingers 2-3, and the group of three with 2-3-4.',
+  notes:'C#4 D#4 C#4 D#4:2 F#4 G#4 A#4:2 A#4 G#4 F#4:2 C#4 D#4 F#4 G#4 A#4:4'},
+ {title:'Up and down the hill',desc:'Steps and skips mixed together',icon:'⛰️',fingers:RH,
+  tip:'A step moves to the very next key. A skip jumps over one key. On the staff, steps go line-to-space, skips go line-to-line or space-to-space. Watch the shape of the melody.',
+  notes:'C4 D4 E4 D4 C4:2 E4 F4 G4 F4 E4:2 C4 E4 D4 F4 E4 G4 F4 D4 C4:4'},
+ {title:'Short and long notes',desc:'Quarter notes and half notes',icon:'⏱️',fingers:RH,tempo:80,
+  tip:'A filled-in note (quarter note) lasts 1 beat. A hollow note with a stem (half note) lasts 2 beats: play it and count "1-2" before moving on. Tap Listen first and count along out loud.',
+  notes:'C4 C4 C4:2 D4 D4 D4:2 E4:2 E4:2 D4 D4 C4:2'},
+ {title:'Count to four',desc:'Whole notes and dotted half notes',icon:'4️⃣',fingers:RH,tempo:80,
+  tip:'A hollow note with no stem (whole note) lasts 4 beats: count "1-2-3-4". A half note with a dot lasts 3 beats. Keep the key held down for the whole count.',
+  notes:'C4:4 D4:4 E4:2 E4:2 F4 F4 F4 F4 G4:4 G4:3 F4 E4:4'},
+ {title:'Eighth notes',desc:'Twice as fast',icon:'🏃',fingers:RH,tempo:80,
+  tip:'Notes with a little flag (eighth notes) last half a beat: two of them fit in one beat. Count "1-and-2-and". Keep them even, not rushed.',
+  notes:'C4 C4:.5 C4:.5 D4 D4:.5 D4:.5 E4:.5 E4:.5 E4:.5 E4:.5 F4:2 G4:.5 F4:.5 E4:.5 D4:.5 C4:2'},
+ {title:'Au Clair de la Lune',desc:'A gentle French tune',icon:'🌙',fingers:RH,tempo:100,
+  tip:'Only C, D and E. Notice the long notes: hold the hollow ones for 2 beats and the last one for 4.',
+  notes:'C4 C4 C4 D4 E4:2 D4:2 C4 E4 D4 D4 C4:4 C4 C4 C4 D4 E4:2 D4:2 C4 E4 D4 D4 C4:4'},
+ {title:'Aura Lee',desc:'The melody of "Love Me Tender"',icon:'💛',fingers:RH,tempo:90,
+  tip:'A slow, singing melody that uses all five fingers and a jump from C up to F. Let each note connect smoothly to the next.',
+  notes:'C4 F4 E4 F4 G4 D4 G4:2 F4 E4 D4 E4 F4:4 C4 F4 E4 F4 G4 D4 G4:2 F4 E4 D4 E4 F4:4'},
+ {title:'London Bridge',desc:'Dotted rhythm practice',icon:'🌉',fingers:{C4:1,D4:1,E4:2,F4:3,G4:4,A4:5},tempo:100,
+  tip:'This starts with a long-short pattern: a dotted note (1½ beats) followed by a quick one. "Lon-don Bridge is fall-ing down".',
+  notes:'G4:1.5 A4:.5 G4 F4 E4 F4 G4:2 D4 E4 F4:2 E4 F4 G4:2 G4:1.5 A4:.5 G4 F4 E4 F4 G4:2 D4:2 G4:2 E4 C4:3'},
+ {title:'Oh! Susanna',desc:'A lively folk song up to A',icon:'🪕',fingers:{C4:1,D4:1,E4:2,F4:3,G4:4,A4:5},tempo:110,
+  tip:'Quick pickup notes lead into each phrase. The melody reaches A with your pinky, like Twinkle Twinkle.',
+  notes:'C4:.5 D4:.5 E4 G4 G4:1.5 A4:.5 G4 E4 C4:1.5 D4:.5 E4 E4 D4 C4 D4:3 C4:.5 D4:.5 E4 G4 G4:1.5 A4:.5 G4 E4 C4:1.5 D4:.5 E4 E4 D4 D4 C4:3'},
+ {title:'Left-hand Au Clair de la Lune',desc:'A calm tune for the left hand',icon:'🌙',fingers:LH,tempo:100,
+  tip:'The same French tune, now low on the bass clef with your left hand: C is finger 5, D is 4, E is 3.',
+  notes:'C3 C3 C3 D3 E3:2 D3:2 C3 E3 D3 D3 C3:4'},
+ {title:'Thumbs near Middle C',desc:'Left hand takes the notes below C',icon:'👍',both:true,fingers:MIDC,
+  tip:'A new position: right thumb on Middle C as before. Left hand sits just below it: finger 2 on B, 3 on A, 4 on G, 5 on F. Melodies can now dip below Middle C, and the left hand catches them.',
+  notes:'C4 B3 A3 G3 F3:2 F3 G3 A3 B3 C4:2 C4 D4 E4 F4 G4:2 G4 F4 E4 D4 C4:2 B3 C4 D4 C4 B3 A3 C4:2'},
+ {title:'Frère Jacques',desc:'A round shared between the hands',icon:'🔔',both:true,fingers:MIDC,tempo:100,
+  tip:'"Are you sleeping?" Most of it is the right hand. At the end ("ding, dang, dong") the left hand plays the low G with finger 4.',
+  notes:'C4 D4 E4 C4 C4 D4 E4 C4 E4 F4 G4:2 E4 F4 G4:2 G4:.5 A4:.5 G4:.5 F4:.5 E4 C4 G4:.5 A4:.5 G4:.5 F4:.5 E4 C4 C4 G3 C4:2 C4 G3 C4:2'},
+ {title:'Yankee Doodle',desc:'The melody dips below Middle C',icon:'🎩',both:true,fingers:MIDC,tempo:110,
+  tip:'The right hand starts. When the tune drops below Middle C (B, A, G), the left hand takes over. Keep both hands resting in position.',
+  notes:'C4 C4 D4 E4 C4 E4 D4:2 C4 C4 D4 E4 C4:2 B3:2 C4 C4 D4 E4 F4 E4 D4 C4 B3 G3 A3 B3 C4:2 C4:2'},
+ {title:'Amazing Grace',desc:'A slow hymn across both hands',icon:'🕊️',both:true,fingers:MIDC,tempo:80,
+  tip:'In 3/4 time: count 1-2-3. The melody starts in the left hand on G, then rises into the right hand. Play it slowly and let the long notes sing.',
+  notes:'G3 C4:2 E4:.5 C4:.5 E4:2 D4 C4:2 A3 G3:2 G3 C4:2 E4:.5 C4:.5 E4:2 D4 G4:3 E4 G4:1.5 E4:.5 G4:.5 E4:.5 C4:2 G3 A3:1.5 C4:.5 C4:.5 A3:.5 G3:2 G3 C4:2 E4:.5 C4:.5 E4:2 D4 C4:3'},
+ {title:'Note reader: bass C to G',desc:'Read the left-hand notes',icon:'👓',reader:true,
+  tip:'Reading practice on the bass clef. The C you play with your left pinky sits in the second space from the bottom. No hints this time!',
+  pool:['C3','D3','E3','F3','G3']},
+
+ /* ===== SOLOIST IV–V ===== */
+ {path:'soloist',unit:'Soloist IV · New keys & two-hand skill',title:'G major scale',desc:'One sharp: F♯',icon:'🪜',hand:'R',tempo:90,
+  fingers:{G4:1,A4:2,B4:3,C5:1,D5:2,E5:3,'F#5':4,G5:5},
+  tip:'The key of G major uses F♯ instead of F. Same fingering as the C scale: 1-2-3, thumb under, 1-2-3-4-5.',
+  notes:'G4 A4 B4 C5 D5 E5 F#5 G5:2 G5 F#5 E5 D5 C5 B4 A4 G4:2'},
+ {title:'F major scale',path:'soloist',unit:'Soloist IV · New keys & two-hand skill',desc:'Meet the flat: B♭',icon:'♭',hand:'R',tempo:90,
+  fingers:{F4:1,G4:2,A4:3,'A#4':4,C5:1,D5:2,E5:3,F5:4},
+  tip:'A flat (♭) means "play the black key just to the LEFT". B♭ is the black key left of B. This scale has a different fingering: 1-2-3-4, then thumb under, 1-2-3-4.',
+  notes:'F4 G4 A4 Bb4 C5 D5 E5 F5:2 F5 E5 D5 C5 Bb4 A4 G4 F4:2'},
+ {path:'soloist',unit:'Soloist IV · New keys & two-hand skill',title:'A minor scale',desc:'The sad cousin of C major',icon:'🌧️',hand:'R',tempo:90,
+  fingers:{A4:1,B4:2,C5:3,D5:1,E5:2,F5:3,G5:4,'G#5':4,A5:5},
+  tip:'A minor uses only white keys, like C major, but starts on A, which gives it a darker mood. The second time, G becomes G♯ ("harmonic minor"), the sound of much classical music.',
+  notes:'A4 B4 C5 D5 E5 F5 G5 A5:2 A5 G5 F5 E5 D5 C5 B4 A4:2 A4 B4 C5 D5 E5 F5 G#5 A5:2 A5 G#5 F5 E5 D5 C5 B4 A4:2'},
+ {path:'soloist',unit:'Soloist IV · New keys & two-hand skill',title:'C scale, hands together',desc:'Both hands, same notes',icon:'👐',both:true,tempo:70,
+  fingers:{C3:5,D3:4,E3:3,F3:2,G3:1,A3:3,B3:2,C4:1,D4:2,E4:3,F4:1,G4:2,A4:3,B4:4,C5:5},
+  tip:'Both hands play the scale an octave apart. The tricky part: the hands cross at different moments (right thumb goes under after E, left finger 3 crosses over after G). Go slowly.',
+  notes:'C3+C4 D3+D4 E3+E4 F3+F4 G3+G4 A3+A4 B3+B4 C4+C5:2 C4+C5 B3+B4 A3+A4 G3+G4 F3+F4 E3+E4 D3+D4 C3+C4:2'},
+ {path:'soloist',unit:'Soloist IV · New keys & two-hand skill',title:'Contrary motion',desc:'Hands move in opposite directions',icon:'↔️',both:true,tempo:70,
+  tip:'The right hand climbs while the left hand descends, like a mirror. Both hands use the same fingers at the same time (1-2-3-1-2-3-4-5), which makes it feel surprisingly natural.',
+  notes:'C3+C4 B2+D4 A2+E4 G2+F4 F2+G4 E2+A4 D2+B4 C2+C5:2 C2+C5 D2+B4 E2+A4 F2+G4 G2+F4 A2+E4 B2+D4 C3+C4:2'},
+ {path:'soloist',unit:'Soloist IV · New keys & two-hand skill',title:'Greensleeves',desc:'A minor melody with bass notes',icon:'🍃',both:true,tempo:100,
+  tip:'An old English tune in A minor, in 3/4 time. Watch for F♯ and G♯. The left hand plays one deep bass note at the start of each bar.',
+  notes:'A4 C5+A2:2 D5 E5+A2:1.5 F#5:.5 E5 D5+G2:2 B4 G4+G2:1.5 A4:.5 B4 C5+A2:2 A4 A4+A2:1.5 G#4:.5 A4 B4+E3:2 G#4 E4+E3:2 A4 C5+A2:2 D5 E5+A2:1.5 F#5:.5 E5 D5+G2:2 B4 G4+G2:1.5 A4:.5 B4 C5+A2:1.5 B4:.5 A4 G#4+E3:1.5 F#4:.5 G#4 A4+A2:3'},
+
+ {path:'soloist',unit:'Soloist V · Advanced pieces',title:'Prelude in C',desc:'Bach · rolling broken chords',icon:'🎼',both:true,tempo:80,
+  tip:'Bach\'s famous prelude is one chord per bar, rolled upward. Notes below Middle C belong to the left hand. Aim for perfectly even notes, like a music box.',
+  notes:'C4:.5 E4:.5 G4:.5 C5:.5 E5:.5 G4:.5 C5:.5 E5:.5 C4:.5 D4:.5 A4:.5 D5:.5 F5:.5 A4:.5 D5:.5 F5:.5 B3:.5 D4:.5 G4:.5 D5:.5 F5:.5 G4:.5 D5:.5 F5:.5 C4:.5 E4:.5 G4:.5 C5:.5 E5:.5 G4:.5 C5:.5 E5:.5 C4:.5 E4:.5 A4:.5 E5:.5 A5:.5 A4:.5 E5:.5 A5:.5 C4:.5 D4:.5 F#4:.5 A4:.5 D5:.5 F#4:.5 A4:.5 D5:.5 B3:.5 D4:.5 G4:.5 D5:.5 G5:.5 G4:.5 D5:.5 G5:.5 B3:.5 C4:.5 E4:.5 G4:.5 C5:.5 E4:.5 G4:.5 C5:4'},
+ {path:'soloist',unit:'Soloist V · Advanced pieces',title:'The Entertainer',desc:'Joplin · the ragtime theme',icon:'🎩',hand:'R',tempo:90,
+  tip:'Ragtime! The fun comes from syncopation: the high C lands "off the beat". Listen first to catch the bouncy rhythm. Watch for D♯.',
+  notes:'D4:.5 D#4:.5 E4:.5 C5 E4:.5 C5 E4:.5 C5:3 C5:.5 D5:.5 D#5:.5 E5:.5 C5:.5 D5:.5 E5 B4:.5 D5 C5:3 D4:.5 D#4:.5 E4:.5 C5 E4:.5 C5 E4:.5 C5:3 A4:.5 G4:.5 F#4:.5 A4:.5 C5:.5 E5 D5:.5 C5:.5 A4:.5 D5:3'},
+ {path:'soloist',unit:'Soloist V · Advanced pieces',title:'Moonlight Sonata',desc:'Beethoven · opening, in A minor',icon:'🌕',both:true,tempo:60,
+  tip:'The famous slow opening, moved to an easier key. The right hand rolls three notes over and over while the left hand holds a deep bass note. Play very softly and evenly.',
+  notes:'[Am] E4+A2:.5 A4:.5 C5:.5 E4:.5 A4:.5 C5:.5 E4:.5 A4:.5 C5:.5 E4:.5 A4:.5 C5:.5 [Am/G] E4+G2:.5 A4:.5 C5:.5 E4:.5 A4:.5 C5:.5 E4:.5 A4:.5 C5:.5 E4:.5 A4:.5 C5:.5 [F] F4+F2:.5 A4:.5 C5:.5 F4:.5 A4:.5 C5:.5 [B♭/D] F4+D2:.5 Bb4:.5 D5:.5 F4:.5 Bb4:.5 D5:.5 [E7] E4+E2:.5 G#4:.5 D5:.5 [Am/E] E4:.5 A4:.5 C5:.5 E4:.5 A4:.5 B4:.5 [E7] D4:.5 G#4:.5 B4:.5 [Am] A2+E4+A4+C5:4'},
+ {path:'soloist',unit:'Soloist V · Advanced pieces',title:'Gymnopédie No. 1',desc:'Satie · floating and calm',icon:'☁️',both:true,split:67,tempo:70,
+  tip:'In 3/4 time. The left hand plays a low bass note, then jumps up to a soft chord, bar after bar. Above it the right hand floats a slow melody. Notes on the lower staff are all left hand.',
+  notes:'[Gmaj7] G2 B3+D4+F#4:2 [Dmaj7] D2 A3+C#4+F#4:2 [Gmaj7] G2 B3+D4+F#4:2 [Dmaj7] D2 A3+C#4+F#4:2 [Gmaj7] G2 B3+D4+F#4+F#5 A5 [Dmaj7] D2+G5 A3+C#4+F#4+F#5 C#5 [Gmaj7] G2+B4 B3+D4+F#4+C#5 D5 [Dmaj7] D2+A4 A3+C#4+F#4:2 [Gmaj7] G2 B3+D4+F#4:3'},
+
+ /* ===== CHORDS IV–V ===== */
+ {path:'chords',unit:'Chords IV · More chords & patterns',title:'The chord family of C',desc:'Dm and Em join in',icon:'👪',hand:'R',tempo:80,
+  tip:'Build a three-note chord on each step of the C scale and you get a family: C, Dm, Em, F, G, Am. Keep the same hand shape (fingers 1-3-5) and just move it up one key at a time.',
+  notes:'[C] C4+E4+G4:2 [Dm] D4+F4+A4:2 [Em] E4+G4+B4:2 [F] F4+A4+C5:2 [G] G4+B4+D5:2 [Am] A4+C5+E5:2 [G] G4+B4+D5:2 [F] F4+A4+C5:2 [Em] E4+G4+B4:2 [Dm] D4+F4+A4:2 [C] C4+E4+G4:4'},
+ {path:'chords',unit:'Chords IV · More chords & patterns',title:'Chord inversions',desc:'Same chord, three shapes',icon:'🔄',hand:'R',tempo:80,
+  tip:'A chord keeps its name when you reorder its notes. Move the bottom note of C-E-G to the top and you get E-G-C, then G-C-E. Inversions let you change chords without jumping around.',
+  notes:'[C] C4+E4+G4:2 [C/E] E4+G4+C5:2 [C/G] G4+C5+E5:2 [C/E] E4+G4+C5:2 [C] C4+E4+G4:2 [F] C4+F4+A4:2 [F/A] A4+C5+F5:2 [F] F4+A4+C5:2 [C] C4+E4+G4:4'},
+ {path:'chords',unit:'Chords IV · More chords & patterns',title:'Chords in the key of G',desc:'G – D – Em – C',icon:'🎸',hand:'R',tempo:80,
+  tip:'The pop progression again, in a new key. D major needs F♯. These four chords in G are a guitar player\'s favourites, so you can play along with friends.',
+  notes:'[G] B3+D4+G4:2 [D] A3+D4+F#4:2 [Em] B3+E4+G4:2 [C] C4+E4+G4:2 [G] B3+D4+G4:2 [D] A3+D4+F#4:2 [Em] B3+E4+G4:2 [C] C4+E4+G4:2 [G] B3+D4+G4:4'},
+ {path:'chords',unit:'Chords IV · More chords & patterns',title:'Alberti bass',desc:'The classical left-hand pattern',icon:'🎻',hand:'L',tempo:100,
+  tip:'Mozart\'s favourite accompaniment: break each chord into bottom-top-middle-top. It keeps the music moving under a melody.',
+  notes:'[C] C3:.5 G3:.5 E3:.5 G3:.5 C3:.5 G3:.5 E3:.5 G3:.5 [F] C3:.5 A3:.5 F3:.5 A3:.5 C3:.5 A3:.5 F3:.5 A3:.5 [G7] B2:.5 G3:.5 F3:.5 G3:.5 B2:.5 G3:.5 F3:.5 G3:.5 [C] C3:.5 G3:.5 E3:.5 G3:.5 C3+E3+G3:2'},
+ {path:'chords',unit:'Chords IV · More chords & patterns',title:'Slash chords',desc:'A bass line that walks down',icon:'📉',both:true,tempo:80,
+  tip:'"G/B" means "G chord with B in the bass". Slash chords let the left hand walk smoothly down the scale while the right hand changes chords: the sound of countless ballads.',
+  notes:'[C] C3+C4+E4+G4:2 [G/B] B2+D4+G4+B4:2 [Am] A2+C4+E4+A4:2 [C/G] G2+C4+E4+G4:2 [F] F2+C4+F4+A4:2 [C/E] E2+C4+E4+G4:2 [Dm] D2+D4+F4+A4:2 [G] G2+D4+G4+B4:2 [C] C3+C4+E4+G4:4'},
+
+ {path:'chords',unit:'Chords V · Jazz, blues & full songs',title:'Seventh chords',desc:'The jazz ii–V–I',icon:'🎷',hand:'R',tempo:70,
+  tip:'Add a fourth note and chords turn jazzy. Dm7 → G7 → Cmaj7 is the "two-five-one", the most common move in jazz. Notice that two notes stay put between each chord.',
+  notes:'[Dm7] D4+F4+A4+C5:2 [G7] D4+F4+G4+B4:2 [Cmaj7] C4+E4+G4+B4:4 [Dm7] D4+F4+A4+C5:2 [G7] D4+F4+G4+B4:2 [Cmaj7] C4+E4+G4+B4:4'},
+ {path:'chords',unit:'Chords V · Jazz, blues & full songs',title:'Boogie-woogie bass',desc:'The rolling left hand',icon:'🚂',hand:'L',tempo:110,
+  tip:'This left-hand pattern drives boogie-woogie and early rock \'n\' roll. It walks up the chord to a bluesy B♭ and back. Start slowly and keep it steady like a train.',
+  notes:'[C] C3:.5 E3:.5 G3:.5 A3:.5 Bb3:.5 A3:.5 G3:.5 E3:.5 C3:.5 E3:.5 G3:.5 A3:.5 Bb3:.5 A3:.5 G3:.5 E3:.5 [F] F2:.5 A2:.5 C3:.5 D3:.5 Eb3:.5 D3:.5 C3:.5 A2:.5 [C] C3:.5 E3:.5 G3:.5 A3:.5 Bb3:.5 A3:.5 G3:.5 E3:.5 [G] G2:.5 B2:.5 D3:.5 E3:.5 F3:.5 E3:.5 D3:.5 B2:.5 [C] C3:.5 E3:.5 G3:.5 A3:.5 C3+G3:2'},
+ {path:'chords',unit:'Chords V · Jazz, blues & full songs',title:'Boogie blues, both hands',desc:'Bass rolls, right hand stabs',icon:'🔥',both:true,tempo:100,
+  tip:'Put it together: the left hand keeps the boogie pattern rolling while the right hand hits a chord at the start of each half bar. Hands doing different jobs is a real milestone!',
+  notes:'[C] C3+C4+E4+G4:.5 E3:.5 G3:.5 A3:.5 Bb3+C4+E4+G4:.5 A3:.5 G3:.5 E3:.5 [C] C3+C4+E4+G4:.5 E3:.5 G3:.5 A3:.5 Bb3+C4+E4+G4:.5 A3:.5 G3:.5 E3:.5 [F] F2+C4+F4+A4:.5 A2:.5 C3:.5 D3:.5 Eb3+C4+F4+A4:.5 D3:.5 C3:.5 A2:.5 [C] C3+C4+E4+G4:.5 E3:.5 G3:.5 A3:.5 Bb3+C4+E4+G4:.5 A3:.5 G3:.5 E3:.5 [G] G2+D4+G4+B4:.5 B2:.5 D3:.5 E3:.5 F3+D4+G4+B4:.5 E3:.5 D3:.5 B2:.5 [C] C3+C4+E4+G4:4'},
+ {path:'chords',unit:'Chords V · Jazz, blues & full songs',title:'Amazing Grace with chords',desc:'Full song in the key of F',icon:'🕊️',both:true,tempo:80,
+  tip:'A complete arrangement in F major, so B is flat. Right hand sings the melody, left hand plays F, B♭ and C chords at each chord symbol. Count 1-2-3.',
+  notes:'C4 [F] F4+C3+F3+A3:2 A4:.5 F4:.5 [F] A4+C3+F3+A3:2 G4 [B♭] F4+D3+F3+Bb3:2 D4 [F] C4+C3+F3+A3:2 C4 [F] F4+C3+F3+A3:2 A4:.5 F4:.5 [F] A4+C3+F3+A3:2 G4 [C] C5+C3+E3+G3:3 A4 [F] C5+C3+F3+A3:1.5 A4:.5 C5:.5 A4:.5 [F] F4+C3+F3+A3:2 C4 [B♭] D4+D3+F3+Bb3:1.5 F4:.5 F4:.5 D4:.5 [F] C4+C3+F3+A3:2 C4 [F] F4+C3+F3+A3:2 A4:.5 F4:.5 [F] A4+C3+F3+A3:2 [C] G4+C3+E3+G3 [F] F4+C3+F3+A3:3'},
+];
+const BASICS_ORDER=[
+ ['Level 1 · Meet the keyboard',['Find Middle C','C and D','C, D, E','Black key groups','Five-finger position','Skipping notes','Up and down the hill']],
+ ['Level 1 · Rhythm',['Short and long notes','Count to four','Eighth notes']],
+ ['Level 1 · First songs',['Hot Cross Buns','Au Clair de la Lune','Mary Had a Little Lamb','Aura Lee','Ode to Joy','Jingle Bells','Twinkle Twinkle','London Bridge','Oh! Susanna']],
+ ['Level 1 · Left hand',['Meet your left hand','Left-hand Hot Cross Buns','Left-hand Au Clair de la Lune','Left-hand Mary']],
+ ['Level 1 · Hands share the melody',['Thumbs near Middle C','Frère Jacques','Yankee Doodle','Amazing Grace']],
+ ['Level 1 · Read music',['Note reader: C to G','Note reader: bass C to G','Note reader: C to C','Happy Birthday']]];
+const LEVELS={'I':'Level 2','II':'Level 3','III':'Level 4','IV':'Level 5 · Intermediate','V':'Level 6 · Advanced'};
+const OLD_TITLES=['Find Middle C', 'C and D', 'C, D, E', 'Five-finger position', 'Skipping notes', 'Hot Cross Buns', 'Mary Had a Little Lamb', 'Ode to Joy', 'Jingle Bells', 'Twinkle Twinkle', 'Meet your left hand', 'Left-hand Hot Cross Buns', 'Left-hand Mary', 'Note reader: C to G', 'Note reader: C to C', 'Happy Birthday', 'Hands take turns', 'Hands together', 'Mary, both hands', 'Ode to Joy, both hands', 'When the Saints', 'C major scale, right hand', 'C major scale, left hand', 'Meet the sharps', 'Bass clef reader', 'Grand staff reader', 'Minuet in G', 'Für Elise', 'Canon (Pachelbel)', 'Your first chord: C', 'C, F and G chords', 'Left-hand chords', 'Jingle Bells with chords', 'Minor chords: A minor', 'The pop progression', 'Pop progression, both hands', 'Broken chords', 'Waltz style', '12-bar blues', 'Silent Night with chords'];
+const slug=t=>t.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+LESSONS.forEach(l=>{l.id=slug(l.title);if(!l.path)l.path='basics';
+  if(l.path!=='basics'){const m=l.unit.match(/^(\w+) (I|II|III|IV|V) · (.*)$/);if(m)l.unit=LEVELS[m[2]]+' · '+m[1]+' '+m[2]+': '+m[3];}});
+{const pos={};BASICS_ORDER.forEach(([u,ts],a)=>ts.forEach((t,b)=>pos[t]=[u,a*100+b]));
+ LESSONS.forEach(l=>{if(l.path==='basics'){if(!pos[l.title])throw new Error('unplaced '+l.title);l.unit=pos[l.title][0];l.ord=pos[l.title][1];}});
+ const b=LESSONS.filter(l=>l.path==='basics').sort((x,y)=>x.ord-y.ord),o=LESSONS.filter(l=>l.path!=='basics');LESSONS.length=0;LESSONS.push(...b,...o);}
+
+
+/* ---------- storage (safe) ---------- */
+const store={get(k,d){try{const v=localStorage.getItem('keys_'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('keys_'+k,JSON.stringify(v))}catch(e){}}};
+let progress=store.get('progress',{});
+if(Object.keys(progress).some(k=>/^L\d+$/.test(k))){const p={};Object.entries(progress).forEach(([k,v])=>{const m=k.match(/^L(\d+)$/);if(m&&OLD_TITLES[+m[1]])p[slug(OLD_TITLES[+m[1]])]=v;else if(!m)p[k]=v;});progress=p;store.set('progress',progress);}
+let settings=Object.assign({labels:true,guide:true},store.get('settings',{}));
+let days=store.get('days',[]);
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};
+function markDay(){const t=today();if(!days.includes(t)){days.push(t);days=days.slice(-400);store.set('days',days);}}
+function streak(){let n=0;const d=new Date();if(!days.includes(today()))d.setDate(d.getDate()-1);
+  while(days.includes(d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate())){n++;d.setDate(d.getDate()-1);}return n;}
+
+/* ---------- audio ---------- */
+let ac,master;
+function setSession(t){try{if(navigator.audioSession)navigator.audioSession.type=t;}catch(e){}}
+function audio(){
+  if(!ac){setSession(mic?'play-and-record':'playback');ac=new (window.AudioContext||window.webkitAudioContext)();
+    const comp=ac.createDynamicsCompressor();master=ac.createGain();master.gain.value=.7;master.connect(comp);comp.connect(ac.destination);}
+  if(ac.state==='suspended')ac.resume();return ac;
+}
+function playTone(m,vel=1){
+  muteUntil=performance.now()+900;
+  try{const a=audio(),t=a.currentTime,f=440*Math.pow(2,(m-69)/12);
+  const decay=Math.max(.7,3-(m-48)*.045);
+  const out=a.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(.32*vel,t+.006);
+  out.gain.exponentialRampToValueAtTime(.12*vel,t+.25);out.gain.exponentialRampToValueAtTime(.0005,t+decay);
+  const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(Math.min(14000,f*10),t);
+  lp.frequency.exponentialRampToValueAtTime(Math.max(f*2,400),t+decay);out.connect(lp);lp.connect(master);
+  [[1,1],[2,.5],[3,.25],[4,.14],[5,.07],[6,.04]].forEach(([h,g])=>{const o=a.createOscillator();o.type='sine';
+    o.frequency.value=f*h*(1+.0003*h*h);const gg=a.createGain();gg.gain.value=g;o.connect(gg);gg.connect(out);o.start(t);o.stop(t+decay+.05);});
+  }catch(e){}
+}
+
+/* ---------- keyboard ---------- */
+const KEYMAP='awsedftgyhujkolp;\'';
+function buildKB(el,lo,hi){
+  el.innerHTML='';const whites=[];for(let m=lo;m<=hi;m++)if(!isBlack(m))whites.push(m);
+  const w=100/whites.length,keys={};el.style.minWidth=whites.length>14?whites.length*30+'px':'';el.parentElement.scrollLeft=0;
+  whites.forEach((m,i)=>{const k=document.createElement('div');k.className='key white';k.style.left=(i*w)+'%';k.style.width=w+'%';
+    k.innerHTML='<span class="fing"></span><span class="lbl">'+letter(m)+(m===60?'<small>MIDDLE</small>':'')+'</span>';k.dataset.m=m;el.appendChild(k);keys[m]=k;});
+  for(let m=lo;m<=hi;m++)if(isBlack(m)){const wi=whites.indexOf(m-1);if(wi<0)continue;
+    const k=document.createElement('div');k.className='key black';k.style.left=((wi+1)*w-w*.31)+'%';k.style.width=(w*.62)+'%';
+    k.innerHTML='<span class="fing"></span>';k.dataset.m=m;el.appendChild(k);keys[m]=k;}
+  el.onpointerdown=e=>{const k=e.target.closest('.key');if(!k)return;e.preventDefault();input(+k.dataset.m,false);};
+  return {keys,lo,hi};
+}
+function flash(kb,m,cls,ms=180){const k=kb&&kb.keys[m];if(!k)return;k.classList.add(cls);setTimeout(()=>k.classList.remove(cls),ms);}
+
+/* ---------- app state ---------- */
+let mode='home',L=null,LKB=null,FKB=null,freeLo=60,demoTimer=null;
+const $=id=>document.getElementById(id);
+let wake=null;
+async function keepAwake(on){try{if(on&&!wake&&navigator.wakeLock){wake=await navigator.wakeLock.request('screen');wake.addEventListener('release',()=>wake=null);}
+  else if(!on&&wake){await wake.release();wake=null;}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&mode!=='home')keepAwake(true);});
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));mode=id;keepAwake(id!=='home');}
+
+function input(m,external,fromMic){
+  if(!external)playTone(m);
+  if(fromMic&&document.querySelector('.ov.on'))return;
+  if(fromMic){const kb=mode==='lesson'?LKB:FKB;
+    if(mode==='lesson'&&L&&!L.done){const t=L.notes[L.idx];
+      const hitM=t&&t.ms.find(x=>x%12===m%12);
+      if(t&&t.ms.length>1){ if(hitM==null)return; t.ms.filter(x=>!L.hit.includes(x)).forEach(x=>lessonInput(x));return; }
+      if(hitM!=null)m=hitM;else{const v=fitRange(kb,m);if(v!=null)m=v;}}
+    else{const v=fitRange(kb,m);if(v!=null)m=v;}
+    if(mode==='free')flash(FKB,m,'press',250);
+  }
+  if(mode==='lesson'&&L)lessonInput(m);
+  else if(mode==='free'){flash(FKB,m,'press');$('freeNote').textContent=isBlack(m)?NN[m%12].replace('#','♯'):letter(m);}
+}
+
+/* ---------- home ---------- */
+let curPath=settings.path||'soloist';
+const PATHS={soloist:{name:'Soloist',desc:'Levels 2–6: read sheet music, play with both hands, scales in new keys, then classical pieces by Bach, Beethoven, Joplin and Satie.'},
+             chords:{name:'Chords',desc:'Levels 2–6: chords, pop progressions, inversions and slash chords, then blues, boogie-woogie, jazz sevenths and full songs.'}};
+function lessonBtn(i,next){const l=LESSONS[i],s=progress[l.id]||0,b=document.createElement('button');
+  b.className='lesson p-'+l.path+(s?' done':'')+(i===next?' next':'');
+  b.innerHTML='<div class="num">'+(s?'✓':l.icon)+'</div><div class="lt"><b>'+l.title+'</b><small>'+l.desc+'</small></div><div class="stars">'+[1,2,3].map(n=>'<i class="'+(n<=s?'on':'')+'">★</i>').join('')+'</div>';
+  b.onclick=()=>openLesson(i);return b;}
+function renderUnits(u,idxs,next){let cur='';
+  idxs.forEach(i=>{const l=LESSONS[i];
+    if(l.unit!==cur){cur=l.unit;const ids=idxs.filter(j=>LESSONS[j].unit===cur);const got=ids.reduce((a,j)=>a+(progress[LESSONS[j].id]||0),0);
+      const h=document.createElement('div');h.className='unit';h.innerHTML='<div>'+cur+'</div> <span>⭐ '+got+'/'+ids.length*3+'</span>';u.appendChild(h);}
+    u.appendChild(lessonBtn(i,next));});}
+function renderHome(){
+  const u=$('units');u.innerHTML='';
+  let total=0;LESSONS.forEach(l=>total+=progress[l.id]||0);
+  $('starTotal').textContent='⭐ '+total+'/'+LESSONS.length*3;$('streak').textContent='🔥 '+streak();
+  const basics=lessonsIn('basics'),pathL=lessonsIn(curPath);
+  const nb=basics.find(i=>!progress[LESSONS[i].id]),np=pathL.find(i=>!progress[LESSONS[i].id]);
+  const next=nb!=null?nb:np;
+  renderUnits(u,basics,next);
+  const tabs=document.createElement('div');tabs.className='paths';
+  tabs.innerHTML='<div class="unit" style="margin-top:28px">Choose your path</div><div class="tabs">'+Object.entries(PATHS).map(([k,p])=>{
+    const ids=lessonsIn(k),got=ids.reduce((a,j)=>a+(progress[LESSONS[j].id]||0),0);
+    return '<button class="tab t-'+k+(k===curPath?' on':'')+'" data-p="'+k+'"><b>'+(k==='soloist'?'🎼 ':'🎹 ')+p.name+'</b><small>⭐ '+got+'/'+ids.length*3+'</small></button>';}).join('')+
+    '</div><p class="pdesc">'+PATHS[curPath].desc+(nb!=null?' Finish Piano Basics first for the best start, or jump in anytime.':'')+'</p>';
+  u.appendChild(tabs);
+  tabs.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{curPath=t.dataset.p;settings.path=curPath;store.set('settings',settings);renderHome();});
+  renderUnits(u,pathL,next);
+  if(next!=null){const l=LESSONS[next];$('heroTitle').textContent=total?'Up next: '+l.title:'Start your first lesson';$('heroDesc').textContent=l.desc+'.';$('heroBtn').onclick=()=>openLesson(next);}
+  else{$('heroTitle').textContent=PATHS[curPath].name+' path complete! 🎉';$('heroDesc').textContent='Try the other path, or replay lessons with the guide turned off.';$('heroBtn').onclick=()=>openLesson(pathL[0]);}
+}
+
+/* ---------- lesson ---------- */
+const staffOf=(l,m)=>l.hand==='L'?'b':l.hand==='R'?'t':(m>=(l.split||60)?'t':'b');
+const nm=m=>isFlat(m)?FN[m%12]:NN[m%12].replace('#','♯');
+function lessonsIn(path){return LESSONS.map((l,i)=>i).filter(i=>LESSONS[i].path===path);}
+function nextIndex(i){const p=LESSONS[i].path;const list=lessonsIn(p);const k=list.indexOf(i);
+  if(k<list.length-1)return list[k+1];if(p==='basics')return lessonsIn(curPath)[0];return -1;}
+function openLesson(i){
+  const l=LESSONS[i];stopDemo();
+  let notes;
+  if(l.reader){const pool=l.pool.map(toMidi);notes=[];let prev=-1;for(let k=0;k<12;k++){let m;do{m=pool[Math.floor(Math.random()*pool.length)];}while(m===prev);prev=m;notes.push({ms:[m],b:1});}}
+  else notes=seq(l.notes);
+  L={i,l,notes,idx:0,hit:[],wrong:false,first:0,mistakes:0,done:false,flat:new Set(((l.notes||'').match(/[A-G]b\d/g)||[]).map(toMidi))};
+  const ms=notes.flatMap(n=>n.ms);let lo=Math.min(...ms),hi=Math.max(...ms);
+  if(isBlack(lo))lo--;
+  const c=lo-(lo%12);let wb=0;for(let m=c;m<lo;m++)if(!isBlack(m))wb++;if(wb<=2)lo=c;
+  hi=hi+2;while(isBlack(hi))hi++;
+  let wc=0;for(let m=lo;m<=hi;m++)if(!isBlack(m))wc++;while(wc<8){hi++;if(!isBlack(hi))wc++;}
+  LKB=buildKB($('lkb'),lo,hi);
+  $('lTitle').textContent=l.title;
+  buildStaff();applySettings();show('lesson');fitStaff();update();
+  $('tipIcon').textContent=l.icon;$('tipTitle').textContent=l.title;$('tipText').textContent=l.tip;$('tipOv').classList.add('on');
+}
+const HS=6;
+function buildStaff(){
+  const l=L.l,all=L.notes.flatMap(n=>n.ms);
+  const useT=all.some(m=>staffOf(l,m)==='t'),useB=all.some(m=>staffOf(l,m)==='b'),grand=useT&&useB;
+  const hasCh=L.notes.some(n=>n.ch);
+  const ST={};
+  if(grand){ST.t={bottom:30,top:38,BY:94};ST.b={bottom:18,top:26,BY:190};}
+  else if(useT)ST.t={bottom:30,top:38,BY:94};else ST.b={bottom:18,top:26,BY:94};
+  const H=grand?220:140;L.H=H;
+  let xs=[],x=0;L.notes.forEach(n=>{xs.push(x);x+=46+16*Math.min(n.b,2)+(n.ms.length>1?4:0);});L.xs=xs;
+  let lines='',clefs='';
+  Object.entries(ST).forEach(([k,s])=>{for(let q=0;q<5;q++)lines+='<line x1="6" x2="5000" y1="'+(s.BY-q*2*HS)+'" y2="'+(s.BY-q*2*HS)+'" stroke="#9aa0b8" stroke-width="1.2"/>';
+    clefs+=k==='t'?'<text x="8" y="'+(s.BY+6)+'" font-size="64" fill="#1c1f33" font-family="serif">𝄞</text>'
+                  :'<text x="10" y="'+(s.BY-6*HS+4)+'" font-size="44" fill="#1c1f33" font-family="serif">𝄢</text>';});
+  if(grand)lines+='<line x1="6" x2="6" y1="'+(ST.t.BY-48)+'" y2="'+ST.b.BY+'" stroke="#1c1f33" stroke-width="2"/>';
+  const led=(nx,s,S)=>{const y=q=>S.BY-(q-S.bottom)*HS;let o='';
+    if(s<=S.bottom-2)for(let q=S.bottom-2;q>=s;q-=2)o+='<line x1="'+(nx-12)+'" x2="'+(nx+12)+'" y1="'+y(q)+'" y2="'+y(q)+'" stroke="#1c1f33" stroke-width="1.4"/>';
+    if(s>=S.top+2)for(let q=S.top+2;q<=s;q+=2)o+='<line x1="'+(nx-12)+'" x2="'+(nx+12)+'" y1="'+y(q)+'" y2="'+y(q)+'" stroke="#1c1f33" stroke-width="1.4"/>';return o;};
+  let g='';
+  L.notes.forEach((n,i)=>{
+    const nx=xs[i];let body='',lbl='';
+    Object.entries(ST).forEach(([k,S])=>{
+      const grp=n.ms.filter(m=>staffOf(l,m)===k).sort((a,b)=>a-b);if(!grp.length)return;
+      const y=q=>S.BY-(q-S.bottom)*HS;
+      const steps=grp.map(stepOf),ys=steps.map(y);
+      const avg=steps.reduce((a,b)=>a+b,0)/steps.length,up=avg<S.bottom+4;
+      let prevOff=false;
+      grp.forEach((m,j)=>{const s=steps[j],yy=ys[j];
+        const off=j>0&&s-steps[j-1]<=1&&!prevOff;prevOff=off;const hx=nx+(off?13:0);
+        body+=led(hx,s,S);
+        if(isBlack(m))body+='<text x="'+(nx-19)+'" y="'+(yy+5)+'" font-size="16" fill="#1c1f33" font-family="serif">'+(isFlat(m)?'♭':'♯')+'</text>';
+        body+='<ellipse class="nh'+(n.b>=2?' hollow':'')+'" id="h'+i+'_'+m+'" cx="'+hx+'" cy="'+yy+'" rx="7.4" ry="5.4" transform="rotate(-20 '+hx+' '+yy+')"/>';
+        if([1.5,.75,3,6].includes(n.b))body+='<circle cx="'+(hx+12)+'" cy="'+(yy-(s%2===S.bottom%2?3:0))+'" r="2" fill="#1c1f33"/>';
+      });
+      if(n.b<4){const lowY=Math.max(...ys),highY=Math.min(...ys);
+        if(up){body+='<line class="st" x1="'+(nx+6.6)+'" x2="'+(nx+6.6)+'" y1="'+(lowY-1)+'" y2="'+(highY-34)+'"/>';
+          if(n.b<1)body+='<path class="st" fill="none" d="M'+(nx+6.6)+' '+(highY-34)+' q 8 8 6 20"/>';}
+        else{body+='<line class="st" x1="'+(nx-6.6)+'" x2="'+(nx-6.6)+'" y1="'+(highY+1)+'" y2="'+(lowY+34)+'"/>';
+          if(n.b<1)body+='<path class="st" fill="none" d="M'+(nx-6.6)+' '+(lowY+34)+' q 8 -8 6 -20"/>';}}
+      const ly=grand?(k==='t'?32:214):134;
+      lbl+='<text class="nl" x="'+nx+'" y="'+ly+'">'+grp.slice().reverse().map(nm).join(' ')+'</text>';
+    });
+    const chord=n.ch?'<text class="chs" x="'+nx+'" y="18">'+n.ch+'</text>':'';
+    g+='<g class="n" id="n'+i+'"><rect class="colhi" x="'+(nx-20)+'" y="4" width="'+(n.ms.length>1?44:40)+'" height="'+(H-8)+'" rx="10"/>'+body+lbl+chord+'</g>';
+  });
+  const endx=x-10;
+  Object.values(ST).forEach(S=>{g+='<line x1="'+endx+'" x2="'+endx+'" y1="'+(S.BY-48)+'" y2="'+S.BY+'" stroke="#1c1f33" stroke-width="1.5"/><line x1="'+(endx+5)+'" x2="'+(endx+5)+'" y1="'+(S.BY-48)+'" y2="'+S.BY+'" stroke="#1c1f33" stroke-width="4"/>';});
+  $('staffwrap').innerHTML='<svg style="height:'+H+'px"><defs><clipPath id="cp"><rect x="62" y="0" width="6000" height="300"/></clipPath></defs>'+lines+clefs+
+    '<g clip-path="url(#cp)"><g class="notes" id="notesG">'+g+'</g></g></svg>';
+  const ng=$('notesG');ng.style.transition='none';requestAnimationFrame(()=>{scrollStaff(0);void ng.getBoundingClientRect();requestAnimationFrame(()=>ng.style.transition='');});
+}
+function fitStaff(){
+  const svg=$('staffwrap').querySelector('svg');if(!svg||!L)return;
+  const H=L.H,cw=$('staffwrap').clientWidth||360,kbw=$('lkb').parentElement;
+  let used=0;for(const c of $('lesson').children){if(c===kbw)continue;const cs=getComputedStyle(c);used+=c.offsetHeight+parseFloat(cs.marginTop)+parseFloat(cs.marginBottom);}
+  const curH=svg.getBoundingClientRect().height||H,minKb=innerHeight<560?150:210;
+  const avail=innerHeight-(used-curH)-minKb;
+  const k=Math.max(.45,Math.min(1,avail/H));L.k=k;
+  svg.setAttribute('viewBox','0 0 '+(cw/k)+' '+H);svg.style.height=(H*k)+'px';
+}
+function scrollStaff(i){const g=$('notesG');if(!g)return;const k=L.k||1;const startX=Math.min(110,(($('staffwrap').clientWidth||360)/k)*.3);
+  g.style.transform='translateX('+(startX-L.xs[Math.min(i,L.notes.length-1)])+'px)';}
+function keepVisible(ms){const wrap=$('lkb').parentElement;if(wrap.scrollWidth<=wrap.clientWidth+2)return;
+  const ks=ms.map(m=>LKB.keys[m]).filter(Boolean);if(!ks.length)return;
+  const wr=wrap.getBoundingClientRect(),rs=ks.map(k=>k.getBoundingClientRect());
+  const a=Math.min(...rs.map(r=>r.left)),b=Math.max(...rs.map(r=>r.right));
+  if(a>=wr.left+8&&b<=wr.right-8)return;
+  wrap.scrollTo({left:wrap.scrollLeft+(a+b)/2-(wr.left+wr.right)/2,behavior:'smooth'});}
+function handOf(m){return staffOf(L.l,m)==='t'?'R':'L';}
+function update(msg){
+  const n=L.notes[L.idx];
+  L.notes.forEach((_,i)=>{const e=$('n'+i);e.classList.toggle('ok',i<L.idx);e.classList.toggle('cur',i===L.idx&&!L.done);e.classList.toggle('bad',i===L.idx&&L.wrong);});
+  if(n)n.ms.forEach(m=>{const h=$('h'+L.idx+'_'+m);if(h)h.classList.toggle('hit',L.hit.includes(m));});
+  scrollStaff(L.idx);
+  $('lProg').style.width=(100*L.idx/L.notes.length)+'%';
+  Object.values(LKB.keys).forEach(k=>{k.classList.remove('target');const f=k.querySelector('.fing');f.classList.remove('has','lh');});
+  if(!n||L.done){$('prompt').innerHTML='🎉 <b>Lesson complete!</b>';return;}
+  const guide=settings.guide&&!L.l.reader,two=L.l.both;
+  const todo=n.ms.filter(m=>!L.hit.includes(m));
+  const fing=m=>{const f=L.l.fingers&&L.l.fingers[nameOf(m)];return (two?handOf(m):'')+(f||'');};
+  if(guide){todo.forEach(m=>{const k=LKB.keys[m];if(!k)return;k.classList.add('target');const fe=k.querySelector('.fing'),t=fing(m);
+    if(t){fe.textContent=t;fe.classList.add('has');if(handOf(m)==='L'&&two)fe.classList.add('lh');}});keepVisible(n.ms);}
+  if(msg){$('prompt').innerHTML=msg;return;}
+  if(L.l.reader){$('prompt').innerHTML='Which note is this? <span style="color:var(--mute)">('+(L.idx+1)+'/'+L.notes.length+')</span>';return;}
+  const show=settings.labels||guide;
+  if(n.ms.length===1){const f=L.l.fingers&&L.l.fingers[nameOf(n.ms[0])];
+    $('prompt').innerHTML='Play <b>'+(show?nm(n.ms[0]):'the blue note')+'</b>'+(two&&guide?' <span style="color:var(--mute)">('+(handOf(n.ms[0])==='L'?'left':'right')+' hand)</span>':'')+(f&&guide&&!two?' with finger <b>'+f+'</b>':'')+(n.b>=2?' <span class="hold">hold '+n.b+' beats</span>':'');}
+  else{const fmt=ms=>ms.slice().sort((a,b)=>a-b).map(m=>L.hit.includes(m)?'<span style="color:var(--green)">'+nm(m)+'</span>':'<b>'+nm(m)+'</b>').join(' ');
+    const lh=n.ms.filter(m=>handOf(m)==='L'),rh=n.ms.filter(m=>handOf(m)==='R');
+    const body=!show?'all blue keys together':(lh.length&&rh.length?'<span class="hb l">L</span> '+fmt(lh)+' &nbsp;<span class="hb r">R</span> '+fmt(rh):fmt(n.ms)+' together');
+    $('prompt').innerHTML=(n.ch?'<span style="color:var(--pink)">'+n.ch+'</span> · ':'')+body;}
+}
+function lessonInput(m){
+  if(L.done)return;
+  const n=L.notes[L.idx];
+  if(n.ms.includes(m)){
+    flash(LKB,m,'good',220);
+    if(!L.hit.includes(m))L.hit.push(m);
+    if(L.hit.length<n.ms.length){update();return;}
+    if(!L.wrong)L.first++;L.wrong=false;L.hit=[];L.idx++;
+    if(L.idx>=L.notes.length){L.done=true;update();setTimeout(finish,500);}
+    else update();
+  }else{
+    flash(LKB,m,'wrong',300);L.mistakes++;L.wrong=true;
+    const sw=$('staffwrap');sw.classList.remove('shake');void sw.offsetWidth;sw.classList.add('shake');
+    const hint=L.l.reader?(L.mistakes%3===0?' Hint: count the lines and spaces from Middle C.':''):'';
+    const want=n.ms.filter(x=>!L.hit.includes(x)).map(nm).join(' + ');
+    update('<span class="bad">That was '+nm(m)+'.</span> '+(L.l.reader?'Try again!'+hint:'Look for <b>'+want+'</b>'));
+  }
+}
+function finish(){
+  const acc=L.first/L.notes.length,stars=acc>=.9?3:acc>=.7?2:1;
+  const prev=progress[L.l.id]||0;if(stars>prev){progress[L.l.id]=stars;store.set('progress',progress);}
+  markDay();
+  $('doneTitle').textContent=['','Nice work!','Great job!','Perfect! 🎉'][stars];
+  $('doneStars').innerHTML=[1,2,3].map(n=>'<i class="'+(n<=stars?'on':'')+'">★</i>').join('');
+  $('doneText').textContent=Math.round(acc*100)+'% of steps right on the first try.'+(stars<3?' Get 90% for three stars.':'')+(stars===3&&settings.guide&&!L.l.reader?' Try it again with Guide off!':'');
+  $('dNext').style.display=nextIndex(L.i)>=0?'':'none';
+  $('doneOv').classList.add('on');
+}
+
+/* ---------- demo / listen ---------- */
+function stopDemo(){clearTimeout(demoTimer);demoTimer=null;document.querySelectorAll('.demo').forEach(e=>e.classList.remove('demo'));$('listenBtn').textContent='🔊 Listen';$('listenBtn2').textContent='🔊';}
+function demo(){
+  if(demoTimer){stopDemo();return;}
+  audio();const notes=L.notes,beat=60000/(L.l.tempo||90);let i=0;$('listenBtn').textContent='■ Stop';$('listenBtn2').textContent='■';
+  const stepf=()=>{document.querySelectorAll('.demo').forEach(e=>e.classList.remove('demo'));
+    if(i>=notes.length){stopDemo();if(!L.done)update();return;}
+    const n=notes[i];n.ms.forEach(m=>{playTone(m,n.ms.length>1?.6:.9);const k=LKB.keys[m];if(k)k.classList.add('demo');});
+    $('n'+i).classList.add('demo');scrollStaff(i);keepVisible(n.ms);
+    i++;demoTimer=setTimeout(stepf,beat*n.b);};
+  stepf();
+}
+
+/* ---------- microphone listening ---------- */
+let mic=null,muteUntil=0;
+function fitRange(kb,x){if(!kb)return null;while(x<kb.lo)x+=12;while(x>kb.hi)x-=12;return x>=kb.lo?x:null;}
+function detectPitch(buf,sr){
+  const tauMax=Math.min(Math.floor(sr/60),(buf.length>>1)-1),tauMin=Math.floor(sr/1100),W=buf.length-tauMax;
+  const d=new Float32Array(tauMax+1);
+  for(let tau=1;tau<=tauMax;tau++){let s=0;for(let i=0;i<W;i++){const x=buf[i]-buf[i+tau];s+=x*x;}d[tau]=s;}
+  let run=0;const c=new Float32Array(tauMax+1);c[0]=1;
+  for(let tau=1;tau<=tauMax;tau++){run+=d[tau];c[tau]=run?d[tau]*tau/run:1;}
+  let tau=-1;
+  for(let t=tauMin;t<tauMax;t++){if(c[t]<.12){while(t+1<tauMax&&c[t+1]<c[t])t++;tau=t;break;}}
+  if(tau<0){let best=1;for(let t=tauMin;t<tauMax;t++)if(c[t]<best){best=c[t];tau=t;}if(best>.22)return null;}
+  const a=c[tau-1],b=c[tau],e=c[tau+1],den=a+e-2*b,shift=den?(a-e)/(2*den):0;
+  return sr/(tau+(Math.abs(shift)<1?shift:0));
+}
+async function startMic(){
+  const a=audio();
+  try{
+    if(window.self!==window.top&&!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))throw {name:'Embedded'};
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw {name:'NoMedia'};
+    setSession('play-and-record');
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    if(a.state==='suspended')await a.resume();
+    const src=a.createMediaStreamSource(stream),an=a.createAnalyser();an.fftSize=2048;src.connect(an);
+    const fan=a.createAnalyser();fan.fftSize=16384;fan.smoothingTimeConstant=0;src.connect(fan);
+    mic={stream,an,fan,fbuf:new Float32Array(8192),wasOn:false,lv:[],noStable:false,poly:false,preLv:-200,pOK:0,onsetAt:0,cOK:0,buf:new Float32Array(2048),sr:a.sampleRate,hist:[],armed:false,armedAt:0,cand:[],last:-1,lastAt:0,stable:[],noise:.003};
+    mic.timer=setInterval(micTick,20);
+    settings.mic=true;store.set('settings',settings);setMicUI();
+    if(!settings.micIntro){settings.micIntro=true;store.set('settings',settings);micHelp('intro');}
+    return true;
+  }catch(e){settings.mic=false;store.set('settings',settings);setMicUI();micHelp(e&&e.name);return false;}
+}
+function stopMic(){if(!mic)return;clearInterval(mic.timer);mic.stream.getTracks().forEach(t=>t.stop());mic=null;setSession('playback');settings.mic=false;store.set('settings',settings);setMicUI();}
+function toggleMic(){mic?stopMic():startMic();}
+function setMicUI(){const on=!!mic;['tMic','fMic'].forEach(id=>$(id).classList.toggle('on',on));
+  $('micStrip').classList.toggle('on',on);$('micStrip2').classList.toggle('on',on);
+  $('homeMic').textContent=on?'🎤 Listening — tap to stop':'🎤 Use my keyboard';}
+function chordPresence(db,sr,N,ms){
+  const bin=sr/N,lo=Math.floor(60/bin),hi=Math.floor(2500/bin);
+  const arr=Array.from(db.slice(lo,hi)).sort((a,b)=>a-b),floor=arr[arr.length>>1],peak=arr[arr.length-1];
+  return ms.map(m=>{const f=440*Math.pow(2,(m-69)/12);let best=-1e9;
+    for(const h of (m<50?[2,3]:m<57?[1,2]:[1])){const c=f*h/bin,w=Math.max(1,c*.018);
+      for(let k=Math.max(1,Math.floor(c-w));k<=Math.ceil(c+w);k++)if(db[k]>best&&db[k]>=db[k-1]&&db[k]>=db[k+1])best=db[k];}
+    return best>floor+CH_FLOOR&&best>peak-CH_PEAK;});
+}
+let CH_FLOOR=24,CH_PEAK=30;
+function noteLevel(db,sr,N,m){const bin=sr/N,f=440*Math.pow(2,(m-69)/12)*(m<50?2:1),c=f/bin,w=Math.max(1,c*.018);let best=-200;
+  for(let k=Math.max(1,Math.floor(c-w));k<=Math.ceil(c+w);k++)if(db[k]>best)best=db[k];return best;}
+function micTick(){
+  const m=mic;if(!m)return;m.an.getFloatTimeDomainData(m.buf);
+  let r=0;for(let i=0;i<m.buf.length;i++)r+=m.buf[i]*m.buf[i];r=Math.sqrt(r/m.buf.length);
+  const now=performance.now();
+  let gate=Math.max(m.noise*2.5,.006);
+  // pitch first, so the noise floor only learns from unpitched (background) sound
+  let midi=null;
+  if(r>Math.max(m.noise*1.5,.003)){const f=detectPitch(m.buf,m.sr);if(f){const x=69+12*Math.log2(f/440),rx=Math.round(x);if(Math.abs(x-rx)<.35&&rx>=36&&rx<=96)midi=rx;}}
+  if(r<m.noise)m.noise=m.noise*.85+r*.15;
+  else if(midi==null)m.noise=Math.min(.03,m.noise*.995+r*.005);
+  gate=Math.max(m.noise*2.5,.006);
+  const recent=m.hist.slice(-6),ref=recent.length?Math.min(...recent):0;
+  m.hist.push(r);if(m.hist.length>12)m.hist.shift();
+  if(typeof document!=='undefined'&&$('micLvl')){const lvl=Math.min(100,Math.sqrt(r/.25)*100),gl=Math.min(100,Math.sqrt(gate/.25)*100);
+    $('micLvl').style.width=$('micLvl2').style.width=lvl+'%';$('micGate').style.left=gl+'%';
+    $('micHear').innerHTML=$('micHear2').innerHTML=midi!=null&&r>gate?'hearing <b>'+NN[midi%12].replace('#','♯')+'</b>':(r>gate?'…':'—');}
+  if(now<muteUntil){m.armed=false;m.stable=[];return;}
+  if(r<gate)midi=null;
+  // onset = energy jumps above its recent minimum (key re-struck)
+  const onset=r>gate&&r>ref*1.3&&r-ref>gate*.5;
+  if(onset&&!m.wasOn)m.onsetAt=now;m.wasOn=onset;
+  const st=(typeof mode!=='undefined'&&mode==='lesson'&&L&&!L.done)?L.notes[L.idx]:null;
+  if(st&&st.ms.length>1){
+    if(r<gate||m.onsetAt<=m.lastAt){m.cOK=0;return;}
+    m.fan.getFloatFrequencyData(m.fbuf);
+    const pres=chordPresence(m.fbuf,m.sr,m.fan.fftSize,st.ms);
+    if(typeof document!=='undefined'&&$('micHear'))$('micHear').innerHTML=$('micHear2').innerHTML='hearing <b>'+st.ms.filter((x,j)=>pres[j]).map(x=>NN[x%12].replace('#','♯')).join(' ')+'</b>';
+    m.cOK=pres.every(Boolean)?m.cOK+1:0;
+    if(m.cOK>=2){m.cOK=0;m.lastAt=now;m.last=-1;m.armed=false;m.noStable=true;m.lv=[];input(st.ms[0],true,true);}
+    return;
+  }
+  // track the expected note's own loudness, to hear it over notes that are still ringing
+  let lv=null;
+  if(st&&r>gate){m.fan.getFloatFrequencyData(m.fbuf);lv=noteLevel(m.fbuf,m.sr,m.fan.fftSize,st.ms[0]);}
+  if(onset&&!m.armed&&m.onsetAt>m.lastAt&&now-m.lastAt>90){m.armed=true;m.armedAt=now;m.cand=[];m.noStable=false;
+    m.poly=ref>gate*1.5;m.preLv=m.lv.length?Math.min(...m.lv.slice(0,Math.max(1,m.lv.length-2))):-200;m.pOK=0;}
+  m.lv.push(lv==null?-200:lv);if(m.lv.length>8)m.lv.shift();
+  const emit=x=>{m.armed=false;m.last=x;m.lastAt=now;m.stable=[];input(x,true,true);};
+  if(m.armed&&m.poly&&st&&lv!=null){
+    m.pOK=(lv-m.preLv>=7&&chordPresence(m.fbuf,m.sr,m.fan.fftSize,[st.ms[0]])[0])?m.pOK+1:0;
+    if(m.pOK>=2){emit(st.ms[0]);return;}
+  }
+  if(m.armed){
+    if(now-m.armedAt>450)m.armed=false;
+    else if(m.poly&&now-m.armedAt<140){if(midi!=null)m.cand.push(midi);}
+    else if(midi!=null){m.cand.push(midi);const n=m.cand.length;
+      if(n>=3&&m.cand[n-1]===m.cand[n-2]&&m.cand[n-2]===m.cand[n-3])emit(midi);
+      else if(n>=5){const c={};m.cand.forEach(x=>c[x]=(c[x]||0)+1);const best=+Object.keys(c).sort((a,b)=>c[b]-c[a])[0];if(c[best]>=3)emit(best);}}
+  }else if(midi!=null&&r>gate*1.5&&!m.noStable){
+    m.stable.push(midi);if(m.stable.length>5)m.stable.shift();
+    if(m.stable.length===5&&m.stable.every(x=>x===midi)&&midi%12!==m.last%12&&now-m.lastAt>200)emit(midi);
+  }else m.stable=[];
+}
+function micHelp(kind){
+  let t,b;
+  if(kind==='intro'){t='I\'m listening 👂';b='<ol><li>Put your phone or laptop close to the keyboard\'s speaker.</li><li>Set the keyboard to a <b>piano</b> sound, loud enough that the level bar jumps well past the white marker when you play.</li><li>Play <b>one note at a time</b> and let each note ring briefly.</li><li>Any octave counts, so you don\'t have to find the exact C.</li><li>Chords: strike all the notes together firmly and hold them for a moment. The "hearing" box shows which chord notes it can pick out.</li></ol><p>Watch the "hearing" box. If it shows the note you played, you\'re set.</p>';}
+  else if(window.self!==window.top){t='The mic is blocked here';b='<p>Pages opened inside the Claude app aren\'t allowed to use the microphone. To practice with your keyboard, open the standalone <b>Keys-Piano.html</b> file in Chrome or Safari, then tap 🎤.</p><p>Until then, the on-screen keys still work for every lesson.</p>';}
+  else if(kind==='NotAllowedError'){t='Microphone access was denied';b='<p>Allow microphone access for this page in your browser\'s site settings, then tap 🎤 again.</p>';}
+  else if(kind==='NoMedia'){t='No microphone access';b='<p>This browser can only use the mic on a secure (https) page, or from a file opened in desktop Chrome. Try a different browser or open it from an https link.</p>';}
+  else{t='Couldn\'t start the mic';b='<p>Check that no other app is using the microphone, then tap 🎤 again.</p>';}
+  $('micOvTitle').textContent=t;$('micOvBody').innerHTML=b;$('micOv').classList.add('on');
+}
+$('micOvOk').onclick=()=>$('micOv').classList.remove('on');
+$('tMic').onclick=$('fMic').onclick=$('homeMic').onclick=toggleMic;
+
+/* ---------- settings ---------- */
+function applySettings(){
+  $('tLbl').classList.toggle('on',settings.labels);$('tHi').classList.toggle('on',settings.guide);$('fLbl').classList.toggle('on',settings.labels);
+  const reader=!!(L&&L.l.reader);
+  $('lkb').classList.toggle('nolabels',!settings.labels||reader);$('fkb').classList.toggle('nolabels',!settings.labels);
+  $('staffwrap').classList.toggle('hidelbl',!settings.labels||reader);
+  $('tLbl').style.display=$('tHi').style.display=reader?'none':'';
+}
+$('tLbl').onclick=()=>{settings.labels=!settings.labels;store.set('settings',settings);applySettings();if(L&&!L.done)update();};
+$('tHi').onclick=()=>{settings.guide=!settings.guide;store.set('settings',settings);applySettings();if(L&&!L.done)update();};
+$('fLbl').onclick=$('tLbl').onclick;
+
+/* ---------- free play ---------- */
+function openFree(){FKB=buildKB($('fkb'),freeLo,freeLo+17);$('octLbl').textContent='C'+(freeLo/12-1);applySettings();show('free');}
+$('octDn').onclick=()=>{if(freeLo>36){freeLo-=12;openFree();}};
+$('octUp').onclick=()=>{if(freeLo<72){freeLo+=12;openFree();}};
+
+/* ---------- wiring ---------- */
+$('freeBtn').onclick=()=>{audio();openFree();};
+$('lBack').onclick=$('fBack').onclick=()=>{stopDemo();L=null;renderHome();show('home');};
+$('tipGo').onclick=()=>{audio();stopDemo();$('tipOv').classList.remove('on');update();};
+$('tipListen').onclick=()=>{$('tipOv').classList.remove('on');demo();};
+$('listenBtn').onclick=$('listenBtn2').onclick=demo;
+$('restartBtn').onclick=$('restartBtn2').onclick=()=>{stopDemo();openLesson(L.i);$('tipOv').classList.remove('on');};
+$('dRetry').onclick=()=>{$('doneOv').classList.remove('on');openLesson(L.i);$('tipOv').classList.remove('on');};
+$('dHome').onclick=()=>{$('doneOv').classList.remove('on');L=null;renderHome();show('home');};
+$('dNext').onclick=()=>{$('doneOv').classList.remove('on');const n=nextIndex(L.i);if(n>=0)openLesson(n);};
+window.addEventListener('resize',()=>{if(L&&mode==='lesson'){fitStaff();scrollStaff(L.idx);if(!L.done)keepVisible(L.notes[L.idx].ms);}});
+document.addEventListener('keydown',e=>{if(e.repeat||e.metaKey||e.ctrlKey)return;const i=KEYMAP.indexOf(e.key.toLowerCase());if(i<0)return;
+  const kb=mode==='lesson'?LKB:mode==='free'?FKB:null;if(!kb)return;const base=kb.lo+((12-kb.lo%12)%12),m=base+i;if(m<=kb.hi){e.preventDefault();input(m,false);flash(kb,m,'press');}});
+
+/* MIDI keyboard (works where the browser allows it) */
+try{if(navigator.requestMIDIAccess)navigator.requestMIDIAccess().then(acc=>{
+  const hook=()=>{let c=0;acc.inputs.forEach(inp=>{c++;inp.onmidimessage=e=>{const[s,d,v]=e.data;if((s&0xf0)===0x90&&v>0){input(d,true);const kb=mode==='lesson'?LKB:FKB;flash(kb,d,'press');}};});
+    $('midiStat').textContent=c?' ✓ MIDI keyboard connected.':'';};
+  hook();acc.onstatechange=hook;}).catch(()=>{});}catch(e){}
+
+renderHome();
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
