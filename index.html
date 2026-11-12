@@ -135,8 +135,8 @@ button{font-family:inherit;cursor:pointer;border:0}
 .tab.t-soloist.on{border-color:var(--blue);background:#1d2a5e}
 .tab.t-chords.on{border-color:var(--pink);background:#3a1d4a}
 .pdesc{color:var(--mute);font-size:14px;margin:10px 2px 0;line-height:1.45}
-.lesson.p-soloist .num{box-shadow:inset 0 0 0 2px var(--blue)}
-.lesson.p-chords .num{box-shadow:inset 0 0 0 2px var(--pink)}
+.lesson.p-soloist .num{border-color:var(--blue)}
+.lesson.p-chords .num{border-color:var(--pink)}
 .lesson.done .num{box-shadow:none}
 .nh.hit{fill:var(--green)!important;stroke:var(--green)!important}
 .chs{font:900 15px Nunito,sans-serif;fill:#d63b8a;text-anchor:middle}
@@ -154,6 +154,29 @@ button{font-family:inherit;cursor:pointer;border:0}
 .hear b{color:var(--teal);font-size:16px}
 .tog.mic.on{background:var(--red);color:#fff}
 .box ol{text-align:left;color:var(--mute);font-size:14px;line-height:1.5;padding-left:20px;margin:0 0 16px}
+/* practice-only layout */
+#lesson .kbwrap{flex:none;height:92px;min-height:0;max-height:none;padding-bottom:6px}
+#lesson .kbwrap.off{display:none}
+#lesson .lbl{font-size:12px}#lesson .lbl small{display:none}
+#lesson .fing{top:8%;height:22px;min-width:22px;font-size:11px}
+#lesson .ctrls{order:0;flex-wrap:nowrap}
+.stg{background:var(--card);color:var(--mute);border-radius:12px;padding:9px 11px;font-weight:800;font-size:13px;white-space:nowrap}
+.stg.on{background:var(--teal);color:#0c2a26}
+.stg.got::after{content:" ★";color:var(--gold)}
+.stg.on.got::after{color:#0c2a26}
+.stg.rs{padding:9px 13px}
+.n.miss .nh{fill:#c5c8d6!important;stroke:#c5c8d6!important}.n.miss .st{stroke:#c5c8d6}.n.miss .nl{fill:#c5c8d6}
+.beat{width:12px;height:12px;border-radius:50%;background:var(--card2);flex:none;visibility:hidden}
+.beat.show{visibility:visible}.beat.tick{background:var(--gold);box-shadow:0 0 10px var(--gold)}.beat.tick.one{background:var(--teal);box-shadow:0 0 12px var(--teal)}
+.count{font-size:34px;color:var(--gold)}
+@media (max-height:560px){#lesson .ctrls{display:flex;padding-bottom:4px}#lesson .stg{padding:5px 10px;font-size:12px}#lesson .kbwrap{height:64px}#lesson .prompt .count{font-size:20px}}
+/* lesson map */
+.lesson{background:transparent;padding:5px 0;margin-bottom:0;gap:14px}
+.lesson .num{width:56px;height:56px;font-size:22px;background:var(--card);border:3px solid var(--card2)}
+.lesson.done .num{border-color:var(--green)}
+.lesson.next{outline:none}.lesson.next .num{border-color:#fff;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(47,224,192,.25)}}
+.lesson .stars{font-size:14px}
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .screen{height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
 </style>
@@ -166,20 +189,21 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
     <div class="logo">Keys<span>.</span></div>
     <div class="badges"><div class="badge" id="streak">🔥 0</div><div class="badge" id="starTotal">⭐ 0</div></div>
   </div>
-  <p class="sub">Learn piano one small step at a time.</p>
+  <p class="sub">Practice on your real piano. The app listens and follows along.</p>
   <div class="hero">
     <h2 id="heroTitle">Start your first lesson</h2>
     <p id="heroDesc">Find Middle C and play your first notes.</p>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="heroBtn">Continue ▶</button>
-      <button class="btn ghost" id="freeBtn">🎹 Free play</button>
-      <button class="btn ghost" id="homeMic">🎤 Use my keyboard</button>
+      <button class="btn ghost" id="freeBtn">🎤 Mic check</button>
+      <button class="btn ghost" id="homeMic" style="display:none"></button>
     </div>
   </div>
   <div id="units"></div>
   <div class="foot">
-    <b>How it works:</b> the staff shows the notes, the glowing key shows where to play, and the blue number is which finger to use (thumb = 1, pinky = 5). The lesson waits for you, so take your time. Tap <b>🔊 Listen</b> to hear how it should sound first.<br><br>
-    🎤 <b>Practicing on a real keyboard?</b> Tap 🎤 and the app listens through your mic. Play one note at a time; any octave counts.<br>📱 Turn your phone sideways for a bigger keyboard. 💻 On a computer, keys A W S E D F T G Y H U J K play notes. 🎹 A USB MIDI keyboard works too in browsers that allow it.
+    <b>How it works:</b> put your phone or tablet on the piano's music stand. The sheet music scrolls past the blue line, and each note turns green when the app hears you play it. Any octave counts.<br><br>
+    Each lesson has three steps, one star each: <b>① Learn</b> waits for you on every note. <b>② Slow</b> and <b>③ Full speed</b> keep the music moving, so you play along in time.<br><br>
+    The app makes no sound. The small key map under the music only shows where the note is; turn it off with <b>Guide</b>.
     <span class="midi" id="midiStat"></span>
   </div>
 </div>
@@ -192,15 +216,15 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
     <button class="tog" id="tLbl">ABC</button>
     <button class="tog" id="tHi">Guide</button>
     <button class="tog mic" id="tMic">🎤</button>
-    <button class="tog land" id="listenBtn2">🔊</button><button class="tog land" id="restartBtn2">↺</button>
+    <span class="beat" id="beat"></span>
   </div>
   <div class="prog"><div id="lProg"></div></div>
   <div class="staffwrap" id="staffwrap"></div>
   <div class="prompt" id="prompt"></div>
   <div class="micstrip" id="micStrip"><div class="dot"></div><span>Listening</span><div class="meter"><div id="micLvl"></div><span id="micGate"></span></div><div class="hear" id="micHear">—</div></div>
   <div class="ctrls">
-    <button class="btn ghost" id="listenBtn">🔊 Listen</button>
-    <button class="btn ghost" id="restartBtn">↺ Restart</button>
+    <button class="stg" id="stg1">① Learn</button><button class="stg" id="stg2">② Slow</button><button class="stg" id="stg3">③ Full speed</button>
+    <button class="stg rs" id="restartBtn">↺</button>
   </div>
   <div class="kbwrap"><div class="kb" id="lkb"></div></div>
 </div>
@@ -209,14 +233,15 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 <div id="free" class="screen">
   <div class="bar">
     <button class="back" id="fBack">‹</button>
-    <div class="ttl">Free play</div>
-    <div class="oct"><button class="tog" id="octDn">◀</button><span id="octLbl" style="font-weight:900;min-width:28px;text-align:center">C4</span><button class="tog" id="octUp">▶</button></div>
-    <button class="tog" id="fLbl">ABC</button>
+    <div class="ttl">Mic check</div>
+    <div class="oct" style="display:none"><button class="tog" id="octDn">◀</button><span id="octLbl" style="font-weight:900;min-width:28px;text-align:center">C4</span><button class="tog" id="octUp">▶</button></div>
+    <button class="tog" id="fLbl" style="display:none">ABC</button>
     <button class="tog mic" id="fMic">🎤</button>
   </div>
   <div class="prompt" id="freeNote" style="font-size:40px;font-weight:900;min-height:70px;padding-top:24px;color:var(--teal)">♪</div>
-  <div class="micstrip" id="micStrip2"><div class="dot"></div><span>Listening</span><div class="meter"><div id="micLvl2"></div></div><div class="hear" id="micHear2">—</div></div>
-  <div class="kbwrap" style="max-height:360px"><div class="kb" id="fkb"></div></div>
+  <div class="micstrip" id="micStrip2"><div class="dot"></div><span>Listening</span><div class="meter"><div id="micLvl2"></div><span id="micGate2"></span></div><div class="hear" id="micHear2">—</div></div>
+  <p style="color:var(--mute);text-align:center;padding:0 24px;line-height:1.5">Play any note on your piano. Its name should appear above, and the bar should jump past the white marker. If it doesn't, move the device closer or turn the piano up.</p>
+  <div class="kbwrap" style="display:none"><div class="kb" id="fkb"></div></div>
 </div>
 
 <!-- overlays -->
@@ -224,7 +249,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
   <div class="tipimg" id="tipIcon">🎹</div>
   <h3 id="tipTitle"></h3>
   <p id="tipText"></p>
-  <div class="row"><button class="btn ghost" id="tipListen">🔊 Listen</button><button class="btn teal" id="tipGo">Let's play</button></div>
+  <p id="tipStage" style="color:var(--teal);font-weight:800"></p><div class="row"><button class="btn teal" id="tipGo">Start</button></div>
 </div></div>
 <div class="ov" id="micOv"><div class="box">
   <div class="tipimg">🎤</div>
@@ -530,6 +555,8 @@ const store={get(k,d){try{const v=localStorage.getItem('keys_'+k);return v?JSON.
 let progress=store.get('progress',{});
 if(Object.keys(progress).some(k=>/^L\d+$/.test(k))){const p={};Object.entries(progress).forEach(([k,v])=>{const m=k.match(/^L(\d+)$/);if(m&&OLD_TITLES[+m[1]])p[slug(OLD_TITLES[+m[1]])]=v;else if(!m)p[k]=v;});progress=p;store.set('progress',progress);}
 let settings=Object.assign({labels:true,guide:true},store.get('settings',{}));
+if(!settings.v2){settings.v2=1;settings.mic=true;store.set('settings',settings);}
+let micBlocked=false;
 let days=store.get('days',[]);
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();};
 function markDay(){const t=today();if(!days.includes(t)){days.push(t);days=days.slice(-400);store.set('days',days);}}
@@ -544,8 +571,7 @@ function audio(){
     const comp=ac.createDynamicsCompressor();master=ac.createGain();master.gain.value=.7;master.connect(comp);comp.connect(ac.destination);}
   if(ac.state==='suspended')ac.resume();return ac;
 }
-function playTone(m,vel=1){
-  muteUntil=performance.now()+900;
+function playTone(m,vel=1){return; /* practice-only: the app makes no sound */
   try{const a=audio(),t=a.currentTime,f=440*Math.pow(2,(m-69)/12);
   const decay=Math.max(.7,3-(m-48)*.045);
   const out=a.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(.32*vel,t+.006);
@@ -603,7 +629,7 @@ const PATHS={soloist:{name:'Soloist',desc:'Levels 2–6: read sheet music, play 
 function lessonBtn(i,next){const l=LESSONS[i],s=progress[l.id]||0,b=document.createElement('button');
   b.className='lesson p-'+l.path+(s?' done':'')+(i===next?' next':'');
   b.innerHTML='<div class="num">'+(s?'✓':l.icon)+'</div><div class="lt"><b>'+l.title+'</b><small>'+l.desc+'</small></div><div class="stars">'+[1,2,3].map(n=>'<i class="'+(n<=s?'on':'')+'">★</i>').join('')+'</div>';
-  b.onclick=()=>openLesson(i);return b;}
+  {const off=[0,30,60,30][i%4];b.style.marginLeft=off+'px';b.style.width='calc(100% - '+off+'px)';}b.onclick=()=>openLesson(i);return b;}
 function renderUnits(u,idxs,next){let cur='';
   idxs.forEach(i=>{const l=LESSONS[i];
     if(l.unit!==cur){cur=l.unit;const ids=idxs.filter(j=>LESSONS[j].unit===cur);const got=ids.reduce((a,j)=>a+(progress[LESSONS[j].id]||0),0);
@@ -626,7 +652,7 @@ function renderHome(){
   tabs.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{curPath=t.dataset.p;settings.path=curPath;store.set('settings',settings);renderHome();});
   renderUnits(u,pathL,next);
   if(next!=null){const l=LESSONS[next];$('heroTitle').textContent=total?'Up next: '+l.title:'Start your first lesson';$('heroDesc').textContent=l.desc+'.';$('heroBtn').onclick=()=>openLesson(next);}
-  else{$('heroTitle').textContent=PATHS[curPath].name+' path complete! 🎉';$('heroDesc').textContent='Try the other path, or replay lessons with the guide turned off.';$('heroBtn').onclick=()=>openLesson(pathL[0]);}
+  else{$('heroTitle').textContent=PATHS[curPath].name+' path started! 🎉';$('heroDesc').textContent='Go back for the play-along stars, or try the other path.';$('heroBtn').onclick=()=>openLesson(pathL[0]);}
 }
 
 /* ---------- lesson ---------- */
@@ -640,7 +666,7 @@ function openLesson(i){
   let notes;
   if(l.reader){const pool=l.pool.map(toMidi);notes=[];let prev=-1;for(let k=0;k<12;k++){let m;do{m=pool[Math.floor(Math.random()*pool.length)];}while(m===prev);prev=m;notes.push({ms:[m],b:1});}}
   else notes=seq(l.notes);
-  L={i,l,notes,idx:0,hit:[],wrong:false,first:0,mistakes:0,done:false,flat:new Set(((l.notes||'').match(/[A-G]b\d/g)||[]).map(toMidi))};
+  L={i,l,notes,idx:0,hit:[],res:[],stage:l.reader?1:Math.min(3,(progress[l.id]||0)+1),play:false,wrong:false,first:0,mistakes:0,done:false,flat:new Set(((l.notes||'').match(/[A-G]b\d/g)||[]).map(toMidi))};
   const ms=notes.flatMap(n=>n.ms);let lo=Math.min(...ms),hi=Math.max(...ms);
   if(isBlack(lo))lo--;
   const c=lo-(lo%12);let wb=0;for(let m=c;m<lo;m++)if(!isBlack(m))wb++;if(wb<=2)lo=c;
@@ -648,8 +674,10 @@ function openLesson(i){
   let wc=0;for(let m=lo;m<=hi;m++)if(!isBlack(m))wc++;while(wc<8){hi++;if(!isBlack(hi))wc++;}
   LKB=buildKB($('lkb'),lo,hi);
   $('lTitle').textContent=l.title;
-  buildStaff();applySettings();show('lesson');fitStaff();update();
-  $('tipIcon').textContent=l.icon;$('tipTitle').textContent=l.title;$('tipText').textContent=l.tip;$('tipOv').classList.add('on');
+  buildStaff();applySettings();show('lesson');fitStaff();setStageUI();update();
+  $('tipIcon').textContent=l.icon;$('tipTitle').textContent=l.title;$('tipText').textContent=l.tip;
+  $('tipStage').textContent=l.reader?'':STAGES[L.stage].tip;$('tipOv').classList.add('on');
+  if(settings.mic!==false&&!mic&&!micBlocked)startMic();
 }
 const HS=6;
 function buildStaff(){
@@ -665,6 +693,7 @@ function buildStaff(){
   Object.entries(ST).forEach(([k,s])=>{for(let q=0;q<5;q++)lines+='<line x1="6" x2="5000" y1="'+(s.BY-q*2*HS)+'" y2="'+(s.BY-q*2*HS)+'" stroke="#9aa0b8" stroke-width="1.2"/>';
     clefs+=k==='t'?'<text x="8" y="'+(s.BY+6)+'" font-size="64" fill="#1c1f33" font-family="serif">𝄞</text>'
                   :'<text x="10" y="'+(s.BY-6*HS+4)+'" font-size="44" fill="#1c1f33" font-family="serif">𝄢</text>';});
+  lines+='<line id="curLn" y1="4" y2="'+(H-4)+'" stroke="#4a8cff" stroke-width="2.5" opacity=".3"/>';
   if(grand)lines+='<line x1="6" x2="6" y1="'+(ST.t.BY-48)+'" y2="'+ST.b.BY+'" stroke="#1c1f33" stroke-width="2"/>';
   const led=(nx,s,S)=>{const y=q=>S.BY-(q-S.bottom)*HS;let o='';
     if(s<=S.bottom-2)for(let q=S.bottom-2;q>=s;q-=2)o+='<line x1="'+(nx-12)+'" x2="'+(nx+12)+'" y1="'+y(q)+'" y2="'+y(q)+'" stroke="#1c1f33" stroke-width="1.4"/>';
@@ -706,13 +735,14 @@ function fitStaff(){
   const svg=$('staffwrap').querySelector('svg');if(!svg||!L)return;
   const H=L.H,cw=$('staffwrap').clientWidth||360,kbw=$('lkb').parentElement;
   let used=0;for(const c of $('lesson').children){if(c===kbw)continue;const cs=getComputedStyle(c);used+=c.offsetHeight+parseFloat(cs.marginTop)+parseFloat(cs.marginBottom);}
-  const curH=svg.getBoundingClientRect().height||H,minKb=innerHeight<560?150:210;
+  const curH=svg.getBoundingClientRect().height||H,minKb=kbw.offsetHeight+10;
   const avail=innerHeight-(used-curH)-minKb;
-  const k=Math.max(.45,Math.min(1,avail/H));L.k=k;
+  const k=Math.max(.45,Math.min(2.4,avail/H,cw/235));L.k=k;
   svg.setAttribute('viewBox','0 0 '+(cw/k)+' '+H);svg.style.height=(H*k)+'px';
 }
-function scrollStaff(i){const g=$('notesG');if(!g)return;const k=L.k||1;const startX=Math.min(110,(($('staffwrap').clientWidth||360)/k)*.3);
-  g.style.transform='translateX('+(startX-L.xs[Math.min(i,L.notes.length-1)])+'px)';}
+function startX(){const k=L.k||1;return Math.min(120,(($('staffwrap').clientWidth||360)/k)*.3);}
+function placeStaff(x){const g=$('notesG');if(!g)return;const sx=startX(),c=$('curLn');if(c){c.setAttribute('x1',sx);c.setAttribute('x2',sx);}g.style.transform='translateX('+(sx-x)+'px)';}
+function scrollStaff(i){if(L.play&&!L.done)return;placeStaff(L.xs[Math.min(i,L.notes.length-1)]);}
 function keepVisible(ms){const wrap=$('lkb').parentElement;if(wrap.scrollWidth<=wrap.clientWidth+2)return;
   const ks=ms.map(m=>LKB.keys[m]).filter(Boolean);if(!ks.length)return;
   const wr=wrap.getBoundingClientRect(),rs=ks.map(k=>k.getBoundingClientRect());
@@ -722,17 +752,19 @@ function keepVisible(ms){const wrap=$('lkb').parentElement;if(wrap.scrollWidth<=
 function handOf(m){return staffOf(L.l,m)==='t'?'R':'L';}
 function update(msg){
   const n=L.notes[L.idx];
-  L.notes.forEach((_,i)=>{const e=$('n'+i);e.classList.toggle('ok',i<L.idx);e.classList.toggle('cur',i===L.idx&&!L.done);e.classList.toggle('bad',i===L.idx&&L.wrong);});
+  L.notes.forEach((_,i)=>{const e=$('n'+i);e.classList.toggle('ok',L.play?L.res[i]==='ok':i<L.idx);e.classList.toggle('miss',L.play&&L.res[i]==='miss');e.classList.toggle('cur',i===L.idx&&!L.done);e.classList.toggle('bad',i===L.idx&&L.wrong);});
   if(n)n.ms.forEach(m=>{const h=$('h'+L.idx+'_'+m);if(h)h.classList.toggle('hit',L.hit.includes(m));});
   scrollStaff(L.idx);
   $('lProg').style.width=(100*L.idx/L.notes.length)+'%';
   Object.values(LKB.keys).forEach(k=>{k.classList.remove('target');const f=k.querySelector('.fing');f.classList.remove('has','lh');});
-  if(!n||L.done){$('prompt').innerHTML='🎉 <b>Lesson complete!</b>';return;}
+  if(L.done){$('prompt').innerHTML='🎉 <b>Done!</b>';return;}
+  if(!n)return;
   const guide=settings.guide&&!L.l.reader,two=L.l.both;
   const todo=n.ms.filter(m=>!L.hit.includes(m));
   const fing=m=>{const f=L.l.fingers&&L.l.fingers[nameOf(m)];return (two?handOf(m):'')+(f||'');};
   if(guide){todo.forEach(m=>{const k=LKB.keys[m];if(!k)return;k.classList.add('target');const fe=k.querySelector('.fing'),t=fing(m);
     if(t){fe.textContent=t;fe.classList.add('has');if(handOf(m)==='L'&&two)fe.classList.add('lh');}});keepVisible(n.ms);}
+  if(L.play)return;
   if(msg){$('prompt').innerHTML=msg;return;}
   if(L.l.reader){$('prompt').innerHTML='Which note is this? <span style="color:var(--mute)">('+(L.idx+1)+'/'+L.notes.length+')</span>';return;}
   const show=settings.labels||guide;
@@ -745,6 +777,7 @@ function update(msg){
 }
 function lessonInput(m){
   if(L.done)return;
+  if(L.play){playInput(m);return;}
   const n=L.notes[L.idx];
   if(n.ms.includes(m)){
     flash(LKB,m,'good',220);
@@ -761,28 +794,70 @@ function lessonInput(m){
     update('<span class="bad">That was '+nm(m)+'.</span> '+(L.l.reader?'Try again!'+hint:'Look for <b>'+want+'</b>'));
   }
 }
-function finish(){
-  const acc=L.first/L.notes.length,stars=acc>=.9?3:acc>=.7?2:1;
-  const prev=progress[L.l.id]||0;if(stars>prev){progress[L.l.id]=stars;store.set('progress',progress);}
-  markDay();
-  $('doneTitle').textContent=['','Nice work!','Great job!','Perfect! 🎉'][stars];
-  $('doneStars').innerHTML=[1,2,3].map(n=>'<i class="'+(n<=stars?'on':'')+'">★</i>').join('');
-  $('doneText').textContent=Math.round(acc*100)+'% of steps right on the first try.'+(stars<3?' Get 90% for three stars.':'')+(stars===3&&settings.guide&&!L.l.reader?' Try it again with Guide off!':'');
-  $('dNext').style.display=nextIndex(L.i)>=0?'':'none';
-  $('doneOv').classList.add('on');
+const STAGES={1:{name:'Learn',tip:'Step 1 · Learn: the music waits for you on every note.'},
+  2:{name:'Slow play-along',tip:'Step 2 · Slow play-along: the music keeps moving at a slow speed. Play each note as it reaches the blue line.',k:.6},
+  3:{name:'Full speed',tip:'Step 3 · Full speed: play along at the real tempo.',k:1}};
+function setStageUI(){const rd=!!L.l.reader,got=progress[L.l.id]||0;
+  [1,2,3].forEach(s=>{const b=$('stg'+s);b.style.display=rd?'none':'';b.classList.toggle('on',L.stage===s);b.classList.toggle('got',got>=s);});}
+function stopDemo(){if(L&&L.raf)cancelAnimationFrame(L.raf);if(L)L.raf=0;$('beat').classList.remove('show','tick','one');}
+function startStage(s){
+  stopDemo();if(L.l.reader)s=1;
+  Object.assign(L,{stage:s,idx:0,hit:[],res:[],first:0,mistakes:0,wrong:false,done:false,play:s>1});
+  L.notes.forEach((n,i)=>n.ms.forEach(m=>{const h=$('h'+i+'_'+m);if(h)h.classList.remove('hit');}));
+  const g=$('notesG');g.style.transition=L.play?'none':'';
+  setStageUI();
+  if(L.play){
+    const bm=60000/((L.l.tempo||90)*STAGES[s].k);L.bm=bm;L.T=[];let t=4*bm;
+    L.notes.forEach(n=>{L.T.push(t);t+=n.b*bm;});L.end=t;
+    L.W=L.T.map((x,i)=>{const gp=i?x-L.T[i-1]:1e9,gn=i<L.T.length-1?L.T[i+1]-x:1e9;return Math.max(140,Math.min(380,.45*Math.min(gp,gn)));});
+    L.t0=performance.now();L.lastBeat=-1;$('beat').classList.add('show');
+    update();L.raf=requestAnimationFrame(playTick);
+  }else update();
 }
-
-/* ---------- demo / listen ---------- */
-function stopDemo(){clearTimeout(demoTimer);demoTimer=null;document.querySelectorAll('.demo').forEach(e=>e.classList.remove('demo'));$('listenBtn').textContent='🔊 Listen';$('listenBtn2').textContent='🔊';}
-function demo(){
-  if(demoTimer){stopDemo();return;}
-  audio();const notes=L.notes,beat=60000/(L.l.tempo||90);let i=0;$('listenBtn').textContent='■ Stop';$('listenBtn2').textContent='■';
-  const stepf=()=>{document.querySelectorAll('.demo').forEach(e=>e.classList.remove('demo'));
-    if(i>=notes.length){stopDemo();if(!L.done)update();return;}
-    const n=notes[i];n.ms.forEach(m=>{playTone(m,n.ms.length>1?.6:.9);const k=LKB.keys[m];if(k)k.classList.add('demo');});
-    $('n'+i).classList.add('demo');scrollStaff(i);keepVisible(n.ms);
-    i++;demoTimer=setTimeout(stepf,beat*n.b);};
-  stepf();
+function playTick(now){
+  if(!L||!L.play||L.done)return;
+  const rel=now-L.t0,n=L.notes.length,lat=mic?120:0;let ch=false;
+  while(L.idx<n&&rel>L.T[L.idx]+L.W[L.idx]+lat){L.res[L.idx]='miss';L.idx++;L.hit=[];ch=true;}
+  if(ch)update();
+  // scroll: the note due now sits on the blue line
+  let x;const T=L.T,xs=L.xs;
+  if(rel<T[0])x=xs[0]-(T[0]-rel)/L.bm*62;
+  else{let i=0;while(i<n-1&&T[i+1]<=rel)i++;x=i<n-1?xs[i]+(xs[i+1]-xs[i])*(rel-T[i])/(T[i+1]-T[i]):xs[i]+(rel-T[i])/L.bm*62;}
+  placeStaff(x);
+  const beat=Math.floor(rel/L.bm);
+  if(beat!==L.lastBeat){L.lastBeat=beat;const b=$('beat');b.classList.add('tick');b.classList.toggle('one',beat%4===0);setTimeout(()=>b.classList.remove('tick'),120);
+    $('prompt').innerHTML=beat<4?'Get ready… <b class="count">'+(4-beat)+'</b>':'Play along · <b>'+L.first+'</b> of '+n+' in time';}
+  $('lProg').style.width=Math.min(100,100*rel/L.end)+'%';
+  if(L.idx>=n&&rel>T[n-1]+Math.min(L.bm,600)){L.done=true;stopDemo();update();setTimeout(finish,400);return;}
+  L.raf=requestAnimationFrame(playTick);
+}
+function playInput(m){
+  const n=L.notes.length,rel=performance.now()-L.t0-(mic?120:0);
+  const match=i=>i<n&&rel>=L.T[i]-L.W[i]-40?L.notes[i].ms.find(x=>x%12===m%12&&!(i===L.idx&&L.hit.includes(x))):undefined;
+  let i=L.idx,x=match(i);
+  if(x===undefined){x=match(i+1);if(x===undefined)return;L.res[i]='miss';L.hit=[];i=L.idx=i+1;}
+  flash(LKB,x,'good',220);L.hit.push(x);
+  if(L.hit.length>=L.notes[i].ms.length){L.res[i]='ok';L.first++;L.idx=i+1;L.hit=[];}
+  update();$('prompt').innerHTML='Play along · <b>'+L.first+'</b> of '+n+' in time';
+}
+function finish(){
+  const n=L.notes.length,acc=L.first/n,pct=Math.round(acc*100),prev=progress[L.l.id]||0;
+  let stars,passed=true,msg,title;
+  if(L.l.reader){stars=acc>=.9?3:acc>=.7?2:1;title=['','Nice work!','Great job!','Perfect! 🎉'][stars];msg=pct+'% of notes right on the first try.'+(stars<3?' Get 90% for three stars.':'');}
+  else if(L.stage===1){stars=1;title='Step 1 done!';msg='You played every note, '+pct+'% of them right on the first try. Now try it in time.';}
+  else{passed=acc>=.75;stars=passed?L.stage:0;title=passed?(L.stage===3?'Lesson mastered! 🎉':'Step 2 done!'):'Almost there!';
+    msg=pct+'% of notes played in time.'+(passed?'':' Reach 75% to earn this star. It gets easier each try.');}
+  if(stars>prev){progress[L.l.id]=stars;store.set('progress',progress);}
+  markDay();setStageUI();
+  const total=Math.max(prev,stars);
+  $('doneTitle').textContent=title;
+  $('doneStars').innerHTML=[1,2,3].map(k=>'<i class="'+(k<=total?'on':'')+'">★</i>').join('');
+  $('doneText').textContent=msg;
+  const nb=$('dNext');L.next=null;
+  if(!L.l.reader&&passed&&L.stage<3){L.next={stage:L.stage+1};nb.textContent='Next: '+STAGES[L.stage+1].name+' ▶';nb.style.display='';}
+  else if(passed&&nextIndex(L.i)>=0){L.next={lesson:nextIndex(L.i)};nb.textContent='Next lesson ▶';nb.style.display='';}
+  else nb.style.display='none';
+  $('doneOv').classList.add('on');
 }
 
 /* ---------- microphone listening ---------- */
@@ -815,11 +890,12 @@ async function startMic(){
     settings.mic=true;store.set('settings',settings);setMicUI();
     if(!settings.micIntro){settings.micIntro=true;store.set('settings',settings);micHelp('intro');}
     return true;
-  }catch(e){settings.mic=false;store.set('settings',settings);setMicUI();micHelp(e&&e.name);return false;}
+  }catch(e){const first=!micBlocked;micBlocked=true;setMicUI();if(first||e.manual)micHelp(e&&e.name);return false;}
 }
 function stopMic(){if(!mic)return;clearInterval(mic.timer);mic.stream.getTracks().forEach(t=>t.stop());mic=null;setSession('playback');settings.mic=false;store.set('settings',settings);setMicUI();}
-function toggleMic(){mic?stopMic():startMic();}
-function setMicUI(){const on=!!mic;['tMic','fMic'].forEach(id=>$(id).classList.toggle('on',on));
+function toggleMic(){if(mic)stopMic();else{micBlocked=false;settings.mic=true;store.set('settings',settings);startMic();}}
+function setMicUI(){const on=!!mic;if(typeof applySettings==='function'&&L&&mode==='lesson'){applySettings();fitStaff();scrollStaff(L.idx);}
+  ['tMic','fMic'].forEach(id=>$(id).classList.toggle('on',on));
   $('micStrip').classList.toggle('on',on);$('micStrip2').classList.toggle('on',on);
   $('homeMic').textContent=on?'🎤 Listening — tap to stop':'🎤 Use my keyboard';}
 function chordPresence(db,sr,N,ms){
@@ -847,7 +923,7 @@ function micTick(){
   const recent=m.hist.slice(-6),ref=recent.length?Math.min(...recent):0;
   m.hist.push(r);if(m.hist.length>12)m.hist.shift();
   if(typeof document!=='undefined'&&$('micLvl')){const lvl=Math.min(100,Math.sqrt(r/.25)*100),gl=Math.min(100,Math.sqrt(gate/.25)*100);
-    $('micLvl').style.width=$('micLvl2').style.width=lvl+'%';$('micGate').style.left=gl+'%';
+    $('micLvl').style.width=$('micLvl2').style.width=lvl+'%';$('micGate').style.left=$('micGate2').style.left=gl+'%';
     $('micHear').innerHTML=$('micHear2').innerHTML=midi!=null&&r>gate?'hearing <b>'+NN[midi%12].replace('#','♯')+'</b>':(r>gate?'…':'—');}
   if(now<muteUntil){m.armed=false;m.stable=[];return;}
   if(r<gate)midi=null;
@@ -888,8 +964,8 @@ function micTick(){
 }
 function micHelp(kind){
   let t,b;
-  if(kind==='intro'){t='I\'m listening 👂';b='<ol><li>Put your phone or laptop close to the keyboard\'s speaker.</li><li>Set the keyboard to a <b>piano</b> sound, loud enough that the level bar jumps well past the white marker when you play.</li><li>Play <b>one note at a time</b> and let each note ring briefly.</li><li>Any octave counts, so you don\'t have to find the exact C.</li><li>Chords: strike all the notes together firmly and hold them for a moment. The "hearing" box shows which chord notes it can pick out.</li></ol><p>Watch the "hearing" box. If it shows the note you played, you\'re set.</p>';}
-  else if(window.self!==window.top){t='The mic is blocked here';b='<p>Pages opened inside the Claude app aren\'t allowed to use the microphone. To practice with your keyboard, open the standalone <b>Keys-Piano.html</b> file in Chrome or Safari, then tap 🎤.</p><p>Until then, the on-screen keys still work for every lesson.</p>';}
+  if(kind==='intro'){t='I\'m listening 👂';b='<ol><li>Put your phone or tablet on the piano\'s music stand, close to the sound.</li><li>Set the keyboard to a <b>piano</b> sound, loud enough that the level bar jumps well past the white marker when you play.</li><li>Play <b>one note at a time</b> and let each note ring briefly.</li><li>Any octave counts, so you don\'t have to find the exact C.</li><li>Chords: strike all the notes together firmly and hold them for a moment. The "hearing" box shows which chord notes it can pick out.</li></ol><p>Watch the "hearing" box. If it shows the note you played, you\'re set.</p>';}
+  else if(window.self!==window.top){t='The mic is blocked here';b='<p>Pages opened inside the Claude app aren\'t allowed to use the microphone. To practice with your piano, open the app from its web link, or open the <b>Keys-Piano.html</b> file in Chrome on a computer.</p><p>Here you can still try the lessons by tapping the small key map.</p>';}
   else if(kind==='NotAllowedError'){t='Microphone access was denied';b='<p>Allow microphone access for this page in your browser\'s site settings, then tap 🎤 again.</p>';}
   else if(kind==='NoMedia'){t='No microphone access';b='<p>This browser can only use the mic on a secure (https) page, or from a file opened in desktop Chrome. Try a different browser or open it from an https link.</p>';}
   else{t='Couldn\'t start the mic';b='<p>Check that no other app is using the microphone, then tap 🎤 again.</p>';}
@@ -905,9 +981,10 @@ function applySettings(){
   $('lkb').classList.toggle('nolabels',!settings.labels||reader);$('fkb').classList.toggle('nolabels',!settings.labels);
   $('staffwrap').classList.toggle('hidelbl',!settings.labels||reader);
   $('tLbl').style.display=$('tHi').style.display=reader?'none':'';
+  $('lkb').parentElement.classList.toggle('off',mic?(!settings.guide||reader):false);
 }
 $('tLbl').onclick=()=>{settings.labels=!settings.labels;store.set('settings',settings);applySettings();if(L&&!L.done)update();};
-$('tHi').onclick=()=>{settings.guide=!settings.guide;store.set('settings',settings);applySettings();if(L&&!L.done)update();};
+$('tHi').onclick=()=>{settings.guide=!settings.guide;store.set('settings',settings);applySettings();if(L){fitStaff();scrollStaff(L.idx);if(!L.done)update();}};
 $('fLbl').onclick=$('tLbl').onclick;
 
 /* ---------- free play ---------- */
@@ -916,16 +993,15 @@ $('octDn').onclick=()=>{if(freeLo>36){freeLo-=12;openFree();}};
 $('octUp').onclick=()=>{if(freeLo<72){freeLo+=12;openFree();}};
 
 /* ---------- wiring ---------- */
-$('freeBtn').onclick=()=>{audio();openFree();};
+$('freeBtn').onclick=()=>{audio();openFree();if(!mic){micBlocked=false;startMic();}};
 $('lBack').onclick=$('fBack').onclick=()=>{stopDemo();L=null;renderHome();show('home');};
-$('tipGo').onclick=()=>{audio();stopDemo();$('tipOv').classList.remove('on');update();};
-$('tipListen').onclick=()=>{$('tipOv').classList.remove('on');demo();};
-$('listenBtn').onclick=$('listenBtn2').onclick=demo;
-$('restartBtn').onclick=$('restartBtn2').onclick=()=>{stopDemo();openLesson(L.i);$('tipOv').classList.remove('on');};
-$('dRetry').onclick=()=>{$('doneOv').classList.remove('on');openLesson(L.i);$('tipOv').classList.remove('on');};
-$('dHome').onclick=()=>{$('doneOv').classList.remove('on');L=null;renderHome();show('home');};
-$('dNext').onclick=()=>{$('doneOv').classList.remove('on');const n=nextIndex(L.i);if(n>=0)openLesson(n);};
-window.addEventListener('resize',()=>{if(L&&mode==='lesson'){fitStaff();scrollStaff(L.idx);if(!L.done)keepVisible(L.notes[L.idx].ms);}});
+$('tipGo').onclick=()=>{audio();$('tipOv').classList.remove('on');startStage(L.stage);};
+[1,2,3].forEach(s=>$('stg'+s).onclick=()=>startStage(s));
+$('restartBtn').onclick=()=>startStage(L.stage);
+$('dRetry').onclick=()=>{$('doneOv').classList.remove('on');startStage(L.stage);};
+$('dHome').onclick=()=>{$('doneOv').classList.remove('on');stopDemo();L=null;renderHome();show('home');};
+$('dNext').onclick=()=>{$('doneOv').classList.remove('on');const x=L.next;if(!x)return;if(x.stage)startStage(x.stage);else openLesson(x.lesson);};
+window.addEventListener('resize',()=>{if(L&&mode==='lesson'){fitStaff();scrollStaff(L.idx);if(!L.done&&L.notes[L.idx])keepVisible(L.notes[L.idx].ms);}});
 document.addEventListener('keydown',e=>{if(e.repeat||e.metaKey||e.ctrlKey)return;const i=KEYMAP.indexOf(e.key.toLowerCase());if(i<0)return;
   const kb=mode==='lesson'?LKB:mode==='free'?FKB:null;if(!kb)return;const base=kb.lo+((12-kb.lo%12)%12),m=base+i;if(m<=kb.hi){e.preventDefault();input(m,false);flash(kb,m,'press');}});
 
